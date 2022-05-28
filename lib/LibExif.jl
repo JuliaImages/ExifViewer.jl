@@ -3,7 +3,33 @@ module LibExif
 using libexif_jll
 export libexif_jll
 
-@enum ExifByteOrder::UInt32 begin
+using CEnum
+
+
+mutable struct _ExifContentPrivate end
+
+const ExifContentPrivate = _ExifContentPrivate
+
+
+mutable struct _ExifEntryPrivate end
+
+const ExifEntryPrivate = _ExifEntryPrivate
+
+
+mutable struct _ExifDataPrivate end
+
+const ExifDataPrivate = _ExifDataPrivate
+
+struct _ExifData
+    ifd::Ptr{Cint}
+    data::Ptr{Cuchar}
+    size::Cuint
+    priv::Ptr{ExifDataPrivate}
+end
+
+const ExifData = _ExifData
+
+@cenum ExifByteOrder::UInt32 begin
     EXIF_BYTE_ORDER_MOTOROLA = 0
     EXIF_BYTE_ORDER_INTEL = 1
 end
@@ -40,10 +66,6 @@ const ExifEntry = _ExifEntry
 function exif_entry_get_value(entry, val, maxlen)
     ccall((:exif_entry_get_value, libexifentry), Ptr{Cchar}, (Ptr{ExifEntry}, Ptr{Cchar}, Cuint), entry, val, maxlen)
 end
-
-mutable struct _ExifContentPrivate end
-
-const ExifContentPrivate = _ExifContentPrivate
 
 function exif_content_new()
     ccall((:exif_content_new, libexifcontent), Ptr{ExifContent}, ())
@@ -96,27 +118,16 @@ function exif_content_log(content, log)
     ccall((:exif_content_log, libexifcontent), Cvoid, (Ptr{ExifContent}, Ptr{Cint}), content, log)
 end
 
-@enum ExifDataType::UInt32 begin
+@cenum ExifDataType::UInt32 begin
     EXIF_DATA_TYPE_UNCOMPRESSED_CHUNKY = 0
     EXIF_DATA_TYPE_UNCOMPRESSED_PLANAR = 1
     EXIF_DATA_TYPE_UNCOMPRESSED_YCC = 2
     EXIF_DATA_TYPE_COMPRESSED = 3
     EXIF_DATA_TYPE_COUNT = 4
-    # EXIF_DATA_TYPE_UNKNOWN = 4
+    EXIF_DATA_TYPE_UNKNOWN = 4
 end
 
-struct _ExifData
-    ifd::Ptr{Cint}
-    data::Ptr{Cuchar}
-    size::Cuint
-    priv::Ptr{ExifDataPrivate}
-end
 
-const ExifData = _ExifData
-
-mutable struct _ExifDataPrivate end
-
-const ExifDataPrivate = _ExifDataPrivate
 
 function exif_data_new()
     ccall((:exif_data_new, libexifdata), Ptr{ExifData}, ())
@@ -177,7 +188,7 @@ function exif_data_foreach_content(data, func, user_data)
     ccall((:exif_data_foreach_content, libexifdata), Cvoid, (Ptr{ExifData}, ExifDataForeachContentFunc, Ptr{Cvoid}), data, func, user_data)
 end
 
-@enum ExifDataOption::UInt32 begin
+@cenum ExifDataOption::UInt32 begin
     EXIF_DATA_OPTION_IGNORE_UNKNOWN_TAGS = 1
     EXIF_DATA_OPTION_FOLLOW_SPECIFICATION = 2
     EXIF_DATA_OPTION_DONT_CHANGE_MAKER_NOTE = 4
@@ -215,9 +226,6 @@ function exif_data_log(data, log)
     ccall((:exif_data_log, libexifdata), Cvoid, (Ptr{ExifData}, Ptr{Cint}), data, log)
 end
 
-mutable struct _ExifEntryPrivate end
-
-const ExifEntryPrivate = _ExifEntryPrivate
 
 function exif_entry_new()
     ccall((:exif_entry_new, libexifentry), Ptr{ExifEntry}, ())
@@ -251,7 +259,7 @@ function exif_entry_dump(entry, indent)
     ccall((:exif_entry_dump, libexifentry), Cvoid, (Ptr{ExifEntry}, Cuint), entry, indent)
 end
 
-@enum ExifFormat::UInt32 begin
+@cenum ExifFormat::UInt32 begin
     EXIF_FORMAT_BYTE = 1
     EXIF_FORMAT_ASCII = 2
     EXIF_FORMAT_SHORT = 3
@@ -274,7 +282,7 @@ function exif_format_get_size(format)
     ccall((:exif_format_get_size, libexifformat), Cuchar, (ExifFormat,), format)
 end
 
-@enum ExifIfd::UInt32 begin
+@cenum ExifIfd::UInt32 begin
     EXIF_IFD_0 = 0
     EXIF_IFD_1 = 1
     EXIF_IFD_EXIF = 2
@@ -355,7 +363,7 @@ function exif_log_free(log)
     ccall((:exif_log_free, libexiflog), Cvoid, (Ptr{ExifLog},), log)
 end
 
-@enum ExifLogCode::UInt32 begin
+@cenum ExifLogCode::UInt32 begin
     EXIF_LOG_CODE_NONE = 0
     EXIF_LOG_CODE_DEBUG = 1
     EXIF_LOG_CODE_NO_MEMORY = 2
@@ -466,7 +474,7 @@ function exif_mnote_data_log(arg1, arg2)
     ccall((:exif_mnote_data_log, libexifmnotedata), Cvoid, (Ptr{ExifMnoteData}, Ptr{Cint}), arg1, arg2)
 end
 
-@enum ExifTag::UInt32 begin
+@cenum ExifTag::UInt32 begin
     EXIF_TAG_INTEROPERABILITY_INDEX = 1
     EXIF_TAG_INTEROPERABILITY_VERSION = 2
     EXIF_TAG_NEW_SUBFILE_TYPE = 254
@@ -586,7 +594,7 @@ end
     EXIF_TAG_PADDING = 59932
 end
 
-@enum ExifSupportLevel::UInt32 begin
+@cenum ExifSupportLevel::UInt32 begin
     EXIF_SUPPORT_LEVEL_UNKNOWN = 0
     EXIF_SUPPORT_LEVEL_NOT_RECORDED = 1
     EXIF_SUPPORT_LEVEL_MANDATORY = 2

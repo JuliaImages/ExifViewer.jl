@@ -4,4 +4,5 @@ authors = ["Ashwani Rathee <ab669522@gmail.com>"]
 version = "0.1.0"
 
 [deps]
+CEnum = "fa961155-64e5-5f13-b03f-caf6b980ea82"
 libexif_jll = "cdeeb48b-bcdf-5b3f-98c4-7a29487f695f"

@@ -1,6 +1,6 @@
 module ExifViewer
 
-include("../lib/libExif.jl")
+include("../lib/LibExif.jl")
 using .LibExif
 
 end # module
