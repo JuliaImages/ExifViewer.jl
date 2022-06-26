@@ -1,17 +1,12 @@
 module ExifViewer
 
 include("../lib/LibExif.jl")
-include("tags.jl") # for simple names
+include("tags.jl")
 
 using .LibExif
 
 export read_metadata, read_tags
-## Tasks 
-# We want to read from IO, data, filepath : done
-# We want to give option of reading specific id and specific tags too
-# We want to make it fast
-# We want docs and we want tests
-# We want to ensure pointer gets removed after information
+
 function numifds(ed::LibExif._ExifData)
     return length(ed.ifd)
 end
@@ -21,12 +16,7 @@ function numentriesinifd(data::LibExif._ExifContent)
 end
 
 function fixformat(d, format)
-    if (
-        format == LibExif.EXIF_FORMAT_UNDEFINED ||
-        format == LibExif.EXIF_FORMAT_ASCII ||
-        format == LibExif.EXIF_FORMAT_SHORT ||
-        format == LibExif.EXIF_FORMAT_SSHORT
-    )
+    if (format == LibExif.EXIF_FORMAT_UNDEFINED || format == LibExif.EXIF_FORMAT_ASCII || format == LibExif.EXIF_FORMAT_SHORT || format == LibExif.EXIF_FORMAT_SSHORT)
         return d
     elseif (format == LibExif.EXIF_FORMAT_LONG || format == LibExif.EXIF_FORMAT_SLONG)
         d = parse(Int32, d)
@@ -34,9 +24,7 @@ function fixformat(d, format)
         d = parse(UInt8, d)
     elseif (format == LibExif.EXIF_FORMAT_SBYTE)
         d = parse(Int8, d)
-    elseif (
-        format == LibExif.EXIF_FORMAT_RATIONAL || format == LibExif.EXIF_FORMAT_SRATIONAL
-    )
+    elseif (format == LibExif.EXIF_FORMAT_RATIONAL || format == LibExif.EXIF_FORMAT_SRATIONAL)
         d = parse(Int32, d)
     elseif (format == LibExif.EXIF_FORMAT_FLOAT || format == LibExif.EXIF_FORMAT_DOUBLE)
         d = parse(float, d)
@@ -86,7 +74,7 @@ Dict{Any, Any} with 12 entries:
 function read_metadata(
     data::Vector{UInt8};
     allifds = true,
-    ifds::Union{Int,NTuple,UnitRange} = 1,
+    ifds::Union{Int, NTuple, UnitRange} = 1,
     extract_thumbnail = false,
 )
     ed_ptr = LibExif.exif_data_new_from_data(data, length(data))
@@ -99,27 +87,25 @@ function read_metadata(
         ifds = collect(1:numifds(ed))
     else
         ifds = collect(ifds)
+        ifds = filter(x-> (x > 0 && x <= 5), ifds)
     end
 
     result = Dict{String,Any}()
     str = Vector{Cuchar}(undef, 1024)
     for i in ifds
         content_ptr = ed.ifd[i] # ques: do we need to unref these too?
-        # handle case where content_ptr is null
         if (content_ptr == C_NULL)
             return error("Unable to read IFD:", i)
         end
         data = unsafe_load(content_ptr)
-        if data.count == 0
-            continue
-        end
+        if data.count == 0 continue end
         res = unsafe_wrap(Array, data.entries, data.count)
         for i = 1:data.count
             entry = unsafe_load(res[i])
             LibExif.exif_entry_get_value(Ref(entry), str, length(str))
             tag = String(copy(str))[1:findfirst(iszero, str)-1]
             tag = fixformat(tag, entry.format)
-            result[string(entry.tag)] = tag
+            if string(entry.tag) ∉ keys(result) result[string(entry.tag)] = tag end
         end
     end
 
@@ -184,10 +170,10 @@ function read_tags(
     if (allifds == true)
         ifds = collect(1:numifds(ed))
     else
-        # we need to check that the ifds are valid
         ifds = collect(ifds)
+        ifds = filter(x-> (x > 0 && x <= 5), ifds)
     end
-
+    
     result = Dict{String,Any}()
     tags = Set(tags)
     str = Vector{Cuchar}(undef, 1024)
@@ -198,24 +184,20 @@ function read_tags(
         end
         for i in tags
             entry = LibExif.exif_content_get_entry(content_ptr, i)
-            if (entry == C_NULL)
-                continue
-            end
+            if (entry == C_NULL) continue end
             entry = unsafe_load(entry)
             LibExif.exif_entry_get_value(Ref(entry), str, length(str))
             tag = String(copy(str))[1:findfirst(iszero, str)-1]
             tag = fixformat(tag, entry.format)
-            result[string(entry.tag)] = tag
+            if string(entry.tag) ∉ keys(result) result[string(entry.tag)] = tag end
             delete!(tags, entry.tag)
-            if tags == Set()
-                break
-            end
+            if tags == Set() break end
         end
     end
     # not sure we should include this
-    if isempty(tags) != true
-        @info "Non-Existent Tags:" tags
-    end
+    # if isempty(tags) != true
+    #     @info "Non-Existent Tags:" tags
+    # end
 
     if (extract_thumbnail == true)
         thumbnail_size = Int(ed.size)
