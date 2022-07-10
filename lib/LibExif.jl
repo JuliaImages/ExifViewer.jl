@@ -324,7 +324,32 @@ function exif_data_set_byte_order(data, order)
     ccall((:exif_data_set_byte_order, libexif), Cvoid, (Ptr{ExifData}, ExifByteOrder), data, order)
 end
 
-mutable struct _ExifMnoteData end
+mutable struct _ExifMnoteDataPriv end
+
+const ExifMnoteDataPriv = _ExifMnoteDataPriv
+
+struct _ExifMnoteDataMethods
+    free::Ptr{Cvoid}
+    save::Ptr{Cvoid}
+    load::Ptr{Cvoid}
+    set_offset::Ptr{Cvoid}
+    set_byte_order::Ptr{Cvoid}
+    count::Ptr{Cvoid}
+    get_id::Ptr{Cvoid}
+    get_name::Ptr{Cvoid}
+    get_title::Ptr{Cvoid}
+    get_description::Ptr{Cvoid}
+    get_value::Ptr{Cvoid}
+end
+
+const ExifMnoteDataMethods = _ExifMnoteDataMethods
+
+struct _ExifMnoteData
+    priv::Ptr{ExifMnoteDataPriv}
+    methods::ExifMnoteDataMethods
+    log::Ptr{ExifLog}
+    mem::Ptr{ExifMem}
+end
 
 const ExifMnoteData = _ExifMnoteData
 
@@ -548,6 +573,18 @@ end
 
 function exif_mem_new_default()
     ccall((:exif_mem_new_default, libexif), Ptr{ExifMem}, ())
+end
+
+function exif_mnote_data_construct(arg1, mem)
+    ccall((:exif_mnote_data_construct, libexif), Cvoid, (Ptr{ExifMnoteData}, Ptr{ExifMem}), arg1, mem)
+end
+
+function exif_mnote_data_set_byte_order(arg1, arg2)
+    ccall((:exif_mnote_data_set_byte_order, libexif), Cvoid, (Ptr{ExifMnoteData}, ExifByteOrder), arg1, arg2)
+end
+
+function exif_mnote_data_set_offset(arg1, arg2)
+    ccall((:exif_mnote_data_set_offset, libexif), Cvoid, (Ptr{ExifMnoteData}, Cuint), arg1, arg2)
 end
 
 function exif_mnote_data_ref(arg1)

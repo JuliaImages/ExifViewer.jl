@@ -19,18 +19,18 @@ export read_metadata, read_tags
 julia> using TestImages, ExifViewer
 julia> filepath = testimage("earth_apollo17.jpg",download_only=true)
 julia> io = open(filepath, "r")
-julia> read_tags(io; tags=[LibExif.EXIF_TAG_FLASH_PIX_VERSION, LibExif.EXIF_TAG_ORIENTATION])
+julia> read_tags(io; read_all=false, tags=[LibExif.EXIF_TAG_FLASH_PIX_VERSION, LibExif.EXIF_TAG_ORIENTATION])
 Dict{Any, Any} with 2 entries:
   "EXIF_TAG_FLASH_PIX_VERSION" => "FlashPix Version 1.0"
   "EXIF_TAG_ORIENTATION"       => "Top-left"
 
-julia> read_tags(filepath; tags=[LibExif.EXIF_TAG_FLASH_PIX_VERSION, LibExif.EXIF_TAG_ORIENTATION])
+julia> read_tags(filepath; read_all=false, tags=[LibExif.EXIF_TAG_FLASH_PIX_VERSION, LibExif.EXIF_TAG_ORIENTATION])
 Dict{Any, Any} with 2 entries:
     "EXIF_TAG_FLASH_PIX_VERSION" => "FlashPix Version 1.0"
     "EXIF_TAG_ORIENTATION"       => "Top-left"
 
 julia> file = open(filepath, "r")
-julia> read_tags(file, tags=[LibExif.EXIF_TAG_FLASH_PIX_VERSION, LibExif.EXIF_TAG_ORIENTATION])
+julia> read_tags(file, read_all=false, tags=[LibExif.EXIF_TAG_FLASH_PIX_VERSION, LibExif.EXIF_TAG_ORIENTATION])
 Dict{Any, Any} with 2 entries:
       "EXIF_TAG_FLASH_PIX_VERSION" => "FlashPix Version 1.0"
       "EXIF_TAG_ORIENTATION"       => "Top-left"
@@ -49,7 +49,7 @@ function read_tags(
     if (ed_ptr == C_NULL)
         return error("Unable to read EXIF data: invalid pointer")
     end
-    result = Dict{String,Any}()
+    result = Dict{String, Any}()
     try
         ed = unsafe_load(ed_ptr)
         ifds = collect(ifds)
@@ -73,7 +73,6 @@ function read_tags(
                 if condition
                     LibExif.exif_entry_get_value(Ref(entry), str, length(str))
                     tag = String(copy(str))[1:max(findfirst(iszero, str)-1, 1)] 
-                    tag = fixformat(tag, entry.format)
                     if string(entry.tag) ∉ keys(result)
                         result[string(entry.tag)] = tag
                     end
@@ -100,8 +99,9 @@ function read_tags(
                 for i = 1:c
                     mnote = LibExif.exif_mnote_data_get_name(md_ptr, i)
                     if (mnote == C_NULL) continue end
-                    data = Base.convert(Vector{UInt8},unsafe_wrap(Array, mnote, 50)) # assume max length of 50 bytes
-                    name = String(copy(data))[1:max(findfirst(iszero, data)-1, 1)] #consider title n description one later
+                    data = unsafe_wrap(Array, mnote, 30)
+                    data = Base.convert(Vector{UInt8}, data[1:max(findfirst(iszero, data)-1, 1)])
+                    name = String(copy(data))
                     name = uppercase(replace(name, " "=>"_")) # preprocess
                     LibExif.exif_mnote_data_get_value(md_ptr, i, str, length(str))
                     tag = String(copy(str))[1:max(findfirst(iszero, str)-1, 1)]

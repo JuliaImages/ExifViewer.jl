@@ -7,5 +7,5 @@ version = "0.1.0"
 libexif_jll = "cdeeb48b-bcdf-5b3f-98c4-7a29487f695f"
 
 [compat]
-libexif_jll = "0.6"
 julia = "1.7"
+libexif_jll = "0.6"
