@@ -94,23 +94,19 @@ function read_tags(
             if (md_ptr == C_NULL)
                 return error("Unable to read MNOTE data")
             end
-            try
-                c = LibExif.exif_mnote_data_count(md_ptr)
-                for i = 1:c
-                    mnote = LibExif.exif_mnote_data_get_name(md_ptr, i)
-                    if (mnote == C_NULL) continue end
-                    data = unsafe_wrap(Array, mnote, 30)
-                    data = Base.convert(Vector{UInt8}, data[1:max(findfirst(iszero, data)-1, 1)])
-                    name = String(copy(data))
-                    name = uppercase(replace(name, " "=>"_")) # preprocess
-                    LibExif.exif_mnote_data_get_value(md_ptr, i, str, length(str))
-                    tag = String(copy(str))[1:max(findfirst(iszero, str)-1, 1)]
-                    if name ∉ keys(result)
-                        result["MNOTE_" * name] = tag
-                    end
+            LibExif.exif_mnote_data_ref(md_ptr)
+            LibExif.exif_mnote_data_unref(md_ptr)
+            c = LibExif.exif_mnote_data_count(md_ptr)
+            for i in 0:c-1
+                mnote = LibExif.exif_mnote_data_get_name(md_ptr, i)
+                if (mnote == C_NULL) continue end
+                data = unsafe_string(mnote)
+                name = uppercase(replace(data, " "=>"_")) # preprocess
+                LibExif.exif_mnote_data_get_value(md_ptr, i, str, length(str))
+                tag = String(copy(str))[1:max(findfirst(iszero, str)-1, 1)]
+                if name ∉ keys(result)
+                    result["MNOTE_" * name] = tag
                 end
-            finally
-                LibExif.exif_mnote_data_unref(md_ptr)
             end
         end
 
