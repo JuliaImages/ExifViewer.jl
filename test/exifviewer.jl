@@ -16,12 +16,12 @@
         @test read_tags(file; read_all=true)["EXIF_TAG_ORIENTATION"] == "Top-left"
 
         io = open(filepath, "r")
-        @test read_tags(io; tags = [EXIF_VERSION])["EXIF_TAG_EXIF_VERSION"] == "Exif Version 2.1"
+        @test read_tags(io; tags = ["EXIF_TAG_EXIF_VERSION"])["EXIF_TAG_EXIF_VERSION"] == "Exif Version 2.1"
 
-        @test read_tags(filepath; tags = [EXIF_VERSION])["EXIF_TAG_EXIF_VERSION"] == "Exif Version 2.1"
+        @test read_tags(filepath; tags = ["EXIF_TAG_EXIF_VERSION"])["EXIF_TAG_EXIF_VERSION"] == "Exif Version 2.1"
 
         file = open(filepath, "r")
-        @test read_tags(file; tags = [EXIF_VERSION])["EXIF_TAG_EXIF_VERSION"] == "Exif Version 2.1"
+        @test read_tags(file; tags = ["EXIF_TAG_EXIF_VERSION"])["EXIF_TAG_EXIF_VERSION"] == "Exif Version 2.1"
 
         @test typeof(read_tags([0x00, 0x01])) == Dict{String, Any}
     end
@@ -31,14 +31,14 @@
         @test length(read_tags(filepath; read_all=true, ifds = 1:2)) == 7
         @test length(read_tags(filepath; read_all=true, ifds = (1, 2))) == 7
 
-        @test length(read_tags(filepath; read_all=false, tags = [FLASH_PIX_VERSION, ORIENTATION])) == 2
-        @test length(read_tags(filepath; read_all=false, tags = [FLASH_PIX_VERSION, ORIENTATION], ifds = 1),) == 1
-        @test length(read_tags(filepath; read_all=false, tags = [FLASH_PIX_VERSION, ORIENTATION], ifds = 1:4),) == 2
-        @test length(read_tags(filepath; read_all=false, tags = [FLASH_PIX_VERSION, ORIENTATION], ifds = 4:5),) == 0
-        @test length(read_tags(filepath; read_all=false, tags = [FLASH_PIX_VERSION, ORIENTATION], ifds = (1, 2, 3)),) == 2
-        @test length(read_tags(filepath; read_all=false, tags = [FLASH_PIX_VERSION, ORIENTATION], ifds = (4, 5)),) == 0
-        @test length(read_tags(filepath; read_all=false, tags = [FLASH_PIX_VERSION, ORIENTATION], ifds = 1)) == 1
-        @test length(read_tags(filepath; read_all=false, tags = [FLASH_PIX_VERSION, ORIENTATION], ifds = (1, 2, 3))) == 2
+        @test length(read_tags(filepath; read_all=false, tags = ["EXIF_TAG_FLASH_PIX_VERSION", "EXIF_TAG_ORIENTATION"])) == 2
+        @test length(read_tags(filepath; read_all=false, tags = ["EXIF_TAG_FLASH_PIX_VERSION", "EXIF_TAG_ORIENTATION"], ifds = 1),) == 1
+        @test length(read_tags(filepath; read_all=false, tags = ["EXIF_TAG_FLASH_PIX_VERSION", "EXIF_TAG_ORIENTATION"], ifds = 1:4),) == 2
+        @test length(read_tags(filepath; read_all=false, tags = ["EXIF_TAG_FLASH_PIX_VERSION", "EXIF_TAG_ORIENTATION"], ifds = 4:5),) == 0
+        @test length(read_tags(filepath; read_all=false, tags = ["EXIF_TAG_FLASH_PIX_VERSION", "EXIF_TAG_ORIENTATION"], ifds = (1, 2, 3)),) == 2
+        @test length(read_tags(filepath; read_all=false, tags = ["EXIF_TAG_FLASH_PIX_VERSION", "EXIF_TAG_ORIENTATION"], ifds = (4, 5)),) == 0
+        @test length(read_tags(filepath; read_all=false, tags = ["EXIF_TAG_FLASH_PIX_VERSION", "EXIF_TAG_ORIENTATION"], ifds = 1)) == 1
+        @test length(read_tags(filepath; read_all=false, tags = ["EXIF_TAG_FLASH_PIX_VERSION", "EXIF_TAG_ORIENTATION"], ifds = (1, 2, 3))) == 2
 
         # all wrongs
         @test_throws BoundsError read_tags(filepath; read_all=true, ifds = 6)
@@ -66,7 +66,7 @@
         end
         ed = unsafe_load(ed_ptr)
         @test length(
-            read_tags(filepath; tags = [ARTIST], extract_thumbnail = true)["EXIF_TAG_THUMBNAIL_DATA"],
+            read_tags(filepath; tags = ["EXIF_TAG_ARTIST"], extract_thumbnail = true)["EXIF_TAG_THUMBNAIL_DATA"],
         ) == ed.size
         @test length(
             read_tags(filepath; read_all=true, extract_thumbnail = true)["EXIF_TAG_THUMBNAIL_DATA"],

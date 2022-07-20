@@ -2,7 +2,6 @@ module ExifViewer
 
 include("../lib/LibExif.jl")
 include("utils.jl")
-include("tags.jl")
 
 using .LibExif
 export read_tags
@@ -48,7 +47,7 @@ function read_tags(
     data::Vector{UInt8};
     ifds::Union{Int,NTuple,UnitRange} = 1:5,
     read_all = true,
-    tags::Vector{LibExif.ExifTag} = Vector{LibExif.ExifTag}([]),
+    tags::Union{AbstractVector, Tuple} = Vector{LibExif.ExifTag}([]),
     extract_thumbnail = false,
     read_mnote = false
 )
@@ -56,6 +55,10 @@ function read_tags(
     if (ed_ptr == C_NULL)
         return error("Unable to read EXIF data: invalid pointer")
     end
+
+    tags = normalize_exif_flag(tags)
+    typeassert(tags, Vector{LibExif.ExifTag})
+    
     result = Dict{String, Any}()
     try
         ed = unsafe_load(ed_ptr)
