@@ -22,6 +22,8 @@
 
         file = open(filepath, "r")
         @test read_tags(file; tags = [EXIF_VERSION])["EXIF_TAG_EXIF_VERSION"] == "Exif Version 2.1"
+
+        @test typeof(read_tags([0x00, 0x01])) == Dict{String, Any}
     end
 
     @testset "Different IFDs" begin
