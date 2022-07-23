@@ -1,29 +1,35 @@
 @testset "exifviewer.jl" begin
 
     @testset "Basic IO" begin
-        io = open(filepath, "r")
-        @test read_tags(io; read_all=true)["EXIF_TAG_PIXEL_X_DIMENSION"] == "3000"
-        close(io)
+        open(filepath, "r") do io
+            @test read_tags(io; read_all=true)["EXIF_TAG_PIXEL_X_DIMENSION"] == "3000"
+        end
 
         io = IOBuffer()
-        write(io, read(filepath))
-        @test read_tags(take!(io); read_all=true)["EXIF_TAG_PIXEL_X_DIMENSION"] == "3000"
-        close(io)
+        try 
+            write(io, read(filepath))
+            @test read_tags(take!(io); read_all=true)["EXIF_TAG_PIXEL_X_DIMENSION"] == "3000"
+        finally
+            close(io)
+        end
 
         @test read_tags(filepath; read_all=true)["EXIF_TAG_EXIF_VERSION"] == "Exif Version 2.1"
 
-        file = open(filepath, "r")
-        @test read_tags(file; read_all=true)["EXIF_TAG_ORIENTATION"] == "Top-left"
+        open(filepath, "r") do file
+            @test read_tags(file; read_all=true)["EXIF_TAG_ORIENTATION"] == "Top-left"
+        end
 
-        io = open(filepath, "r")
-        @test read_tags(io; tags = ["EXIF_TAG_EXIF_VERSION"])["EXIF_TAG_EXIF_VERSION"] == "Exif Version 2.1"
+        open(filepath, "r") do io
+            @test read_tags(io; tags = ["EXIF_TAG_EXIF_VERSION"])["EXIF_TAG_EXIF_VERSION"] == "Exif Version 2.1"
+        end 
 
         @test read_tags(filepath; tags = ["EXIF_TAG_EXIF_VERSION"])["EXIF_TAG_EXIF_VERSION"] == "Exif Version 2.1"
 
-        file = open(filepath, "r")
-        @test read_tags(file; tags = ["EXIF_TAG_EXIF_VERSION"])["EXIF_TAG_EXIF_VERSION"] == "Exif Version 2.1"
+        open(filepath, "r") do io
+            @test read_tags(io; tags = ["EXIF_TAG_EXIF_VERSION"])["EXIF_TAG_EXIF_VERSION"] == "Exif Version 2.1"
+        end
 
-        @test typeof(read_tags([0x00, 0x01])) == Dict{String, Any}
+        @test typeof(read_tags([0x00, 0x01])) == Dict{String, Any} # to see behavior when garbage data in
     end
 
     @testset "Different IFDs" begin

@@ -11,7 +11,7 @@ ExifViewer.jl is a Julia wrapper of the C library libexif that provides EXIF sup
 # Usage
 
 We provide method to read EXIF tags from images using `read_tags` methods which can
-take input in form of Filepath, IO, Data(Vector{UInt8})
+take input in form of Filepath, IO, and bytes sequence(`Vector{UInt8}`)
 
 `read_tags` reads EXIF tags from the input source data and it returns an empty 
 dictionary if the source data doesn't contain EXIF tags.
@@ -43,8 +43,8 @@ Dict{Any, Any} with 2 entries:
     "EXIF_TAG_FLASH_PIX_VERSION" => "FlashPix Version 1.0"
     "EXIF_TAG_ORIENTATION"       => "Top-left"
 
-julia> file = open(filepath, "r")
-julia> read_tags(file, read_all=false, tags=["EXIF_TAG_FLASH_PIX_VERSION", "EXIF_TAG_ORIENTATION"])
+julia> data = read(filepath)
+julia> read_tags(data, read_all=false, tags=["EXIF_TAG_FLASH_PIX_VERSION", "EXIF_TAG_ORIENTATION"])
 Dict{Any, Any} with 2 entries:
       "EXIF_TAG_FLASH_PIX_VERSION" => "FlashPix Version 1.0"
       "EXIF_TAG_ORIENTATION"       => "Top-left"
