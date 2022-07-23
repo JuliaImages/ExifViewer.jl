@@ -42,92 +42,99 @@ Dict{Any, Any} with 2 entries:
 ```
 """
 function read_tags(
-data::Vector{UInt8};
-ifds::Union{Int,NTuple,UnitRange} = IFDS_ALL_FIELDS,
-read_all = true,
-tags::Union{AbstractVector, Tuple} = Vector{LibExif.ExifTag}([]),
-extract_thumbnail = false,
-read_mnote = false
+    data::Vector{UInt8};
+    ifds::Union{Int,NTuple,UnitRange} = IFDS_ALL_FIELDS,
+    read_all = true,
+    tags::Union{AbstractVector,Tuple} = Vector{LibExif.ExifTag}([]),
+    extract_thumbnail = false,
+    read_mnote = false,
 )
-ed_ptr = LibExif.exif_data_new_from_data(data, length(data))
-if (ed_ptr == C_NULL)
-    return error("Unable to read EXIF data: invalid pointer")
-end
+    ed_ptr = LibExif.exif_data_new_from_data(data, length(data))
+    if (ed_ptr == C_NULL)
+        return error("Unable to read EXIF data: invalid pointer")
+    end
 
-tags = normalize_exif_flag(tags)
-typeassert(tags, Vector{LibExif.ExifTag})
+    tags = normalize_exif_flag(tags)
+    typeassert(tags, Vector{LibExif.ExifTag})
 
-result = Dict{String, Any}()
-try
-    ed = unsafe_load(ed_ptr)
-    ifds = collect(ifds)
-    # ifds = read_all ? collect(1:numifds(ed)) : collect(ifds)
-    checkbounds(Bool, collect(1:numifds(ed)), ifds) || throw(BoundsError(collect(1:numifds(ed)), ifds))
+    result = Dict{String,Any}()
+    try
+        ed = unsafe_load(ed_ptr)
+        ifds = collect(ifds)
+        # ifds = read_all ? collect(1:numifds(ed)) : collect(ifds)
+        checkbounds(Bool, collect(1:numifds(ed)), ifds) ||
+            throw(BoundsError(collect(1:numifds(ed)), ifds))
 
-    tags = read_all ? tags : Set(tags)
-    str = Vector{Cuchar}(undef, 1024)
+        tags = read_all ? tags : Set(tags)
+        str = Vector{Cuchar}(undef, 1024)
 
-    for i in ifds
-        content_ptr = ed.ifd[i] # ques: do we need to unref these too?
-        if (content_ptr == C_NULL)
-            return error("Unable to read IFD:", i)
-        end
-        data = unsafe_load(content_ptr)
-        if data.count == 0 continue end
-        res = unsafe_wrap(Array, data.entries, data.count)
-        for i = 1:data.count
-            entry = unsafe_load(res[i])
-            condition = read_all ? read_all : entry.tag in tags
-            if condition
-                LibExif.exif_entry_get_value(Ref(entry), str, length(str))
-                tag = String(copy(str))[1:max(findfirst(iszero, str)-1, 1)] 
-                if string(entry.tag) ∉ keys(result)
-                    result[string(entry.tag)] = tag
+        for i in ifds
+            content_ptr = ed.ifd[i] # ques: do we need to unref these too?
+            if (content_ptr == C_NULL)
+                return error("Unable to read IFD:", i)
+            end
+            data = unsafe_load(content_ptr)
+            if data.count == 0
+                continue
+            end
+            res = unsafe_wrap(Array, data.entries, data.count)
+            for i = 1:data.count
+                entry = unsafe_load(res[i])
+                condition = read_all ? read_all : entry.tag in tags
+                if condition
+                    LibExif.exif_entry_get_value(Ref(entry), str, length(str))
+                    tag = String(copy(str))[1:max(findfirst(iszero, str) - 1, 1)]
+                    if string(entry.tag) ∉ keys(result)
+                        result[string(entry.tag)] = tag
+                    end
+                end
+                if read_all == false
+                    delete!(tags, entry.tag)
+                    if tags == Set()
+                        break
+                    end
                 end
             end
-            if read_all == false
-                delete!(tags, entry.tag)
-                if tags == Set() break end
+        end
+
+        # not sure we should include this
+        # if isempty(tags) != true
+        #     @info "Non-Existent Tags:" tags
+        # end
+
+        if (read_mnote == true)
+            md_ptr = LibExif.exif_data_get_mnote_data(ed_ptr)
+            if (md_ptr == C_NULL)
+                return error("Unable to read MNOTE data")
+            end
+            LibExif.exif_mnote_data_ref(md_ptr)
+            LibExif.exif_mnote_data_unref(md_ptr)
+            c = LibExif.exif_mnote_data_count(md_ptr)
+            for i = 0:c-1
+                mnote = LibExif.exif_mnote_data_get_name(md_ptr, i)
+                if (mnote == C_NULL)
+                    continue
+                end
+                data = unsafe_string(mnote)
+                name = uppercase(replace(data, " " => "_")) # preprocess
+                LibExif.exif_mnote_data_get_value(md_ptr, i, str, length(str))
+                tag = String(copy(str))[1:max(findfirst(iszero, str) - 1, 1)]
+                if name ∉ keys(result)
+                    result["MNOTE_"*name] = tag
+                end
             end
         end
-    end
 
-    # not sure we should include this
-    # if isempty(tags) != true
-    #     @info "Non-Existent Tags:" tags
-    # end
-
-    if (read_mnote == true)
-        md_ptr = LibExif.exif_data_get_mnote_data(ed_ptr)
-        if (md_ptr == C_NULL)
-            return error("Unable to read MNOTE data")
+        if (extract_thumbnail == true)
+            thumbnail_size = Int(ed.size)
+            thumbnail_data = unsafe_wrap(Array, ed.data, thumbnail_size)
+            result["EXIF_TAG_THUMBNAIL_DATA"] = thumbnail_data
         end
-        LibExif.exif_mnote_data_ref(md_ptr)
-        LibExif.exif_mnote_data_unref(md_ptr)
-        c = LibExif.exif_mnote_data_count(md_ptr)
-        for i in 0:c-1
-            mnote = LibExif.exif_mnote_data_get_name(md_ptr, i)
-            if (mnote == C_NULL) continue end
-            data = unsafe_string(mnote)
-            name = uppercase(replace(data, " "=>"_")) # preprocess
-            LibExif.exif_mnote_data_get_value(md_ptr, i, str, length(str))
-            tag = String(copy(str))[1:max(findfirst(iszero, str)-1, 1)]
-            if name ∉ keys(result)
-                result["MNOTE_" * name] = tag
-            end
-        end
+    finally
+        LibExif.exif_data_unref(ed_ptr)
     end
 
-    if (extract_thumbnail == true)
-        thumbnail_size = Int(ed.size)
-        thumbnail_data = unsafe_wrap(Array, ed.data, thumbnail_size)
-        result["EXIF_TAG_THUMBNAIL_DATA"] = thumbnail_data
-    end
-finally
-    LibExif.exif_data_unref(ed_ptr)
-end
-
-return result
+    return result
 end
 
 function read_tags(filepath::AbstractString; kwargs...)
