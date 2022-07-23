@@ -1,6 +1,6 @@
 [general]
 jll_pkg_name = "libexif_jll"
 library_name = "libexif"
-library_names = {"exif-byte-order.h" = "libexifbyteorder", "exif-content.h" = "libexifcontent","exif-data-type.h"="libexifdatatype", "exif-data.h"="libexifdata", "exif-entry.h"="libexifentry", "exif-format.h"="libexifformat", "exif-ifd.h"="libexififd", "exif-loader.h"="libexifloader", "exif-log.h"="libexiflog", "exif-mem.h"="libexifmem", "exif-mnote-data.h"="libexifmnotedata","exif-tag.h"="libexiftag" , "exif-utils.h"="libexifutils"}
 output_file_path = "../lib/LibExif.jl"
 module_name = "LibExif"
+use_julia_native_enum_type = true

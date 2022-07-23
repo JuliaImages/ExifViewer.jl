@@ -3,478 +3,35 @@ module LibExif
 using libexif_jll
 export libexif_jll
 
-using CEnum
-
-
-mutable struct _ExifContentPrivate end
-
-const ExifContentPrivate = _ExifContentPrivate
-
-
-mutable struct _ExifEntryPrivate end
-
-const ExifEntryPrivate = _ExifEntryPrivate
-
-
-mutable struct _ExifDataPrivate end
-
-const ExifDataPrivate = _ExifDataPrivate
-
-struct _ExifData
-    ifd::Ptr{Cint}
-    data::Ptr{Cuchar}
-    size::Cuint
-    priv::Ptr{ExifDataPrivate}
-end
-
-const ExifData = _ExifData
-
-@cenum ExifByteOrder::UInt32 begin
+@enum ExifByteOrder::UInt32 begin
     EXIF_BYTE_ORDER_MOTOROLA = 0
     EXIF_BYTE_ORDER_INTEL = 1
 end
 
 function exif_byte_order_get_name(order)
-    ccall((:exif_byte_order_get_name, libexifbyteorder), Ptr{Cchar}, (ExifByteOrder,), order)
+    ccall((:exif_byte_order_get_name, libexif), Ptr{Cchar}, (ExifByteOrder,), order)
 end
 
+mutable struct _ExifContentPrivate end
+
+const ExifContentPrivate = _ExifContentPrivate
+
 struct _ExifContent
-    entries::Ptr{Ptr{Cint}}
+    entries::Ptr{Ptr{Cvoid}} # entries::Ptr{Ptr{ExifEntry}}
     count::Cuint
-    parent::Ptr{Cint}
+    parent::Ptr{Cvoid} # parent::Ptr{ExifData}
     priv::Ptr{ExifContentPrivate}
+end
+
+function Base.getproperty(x::_ExifContent, f::Symbol)
+    f === :entries && return Ptr{Ptr{ExifEntry}}(getfield(x, f))
+    f === :parent && return Ptr{ExifData}(getfield(x, f))
+    return getfield(x, f)
 end
 
 const ExifContent = _ExifContent
 
-function exif_content_get_entry(content, tag)
-    ccall((:exif_content_get_entry, libexifcontent), Ptr{Cint}, (Ptr{ExifContent}, Cint), content, tag)
-end
-
-struct _ExifEntry
-    tag::Cint
-    format::Cint
-    components::Culong
-    data::Ptr{Cuchar}
-    size::Cuint
-    parent::Ptr{Cint}
-    priv::Ptr{ExifEntryPrivate}
-end
-
-const ExifEntry = _ExifEntry
-
-function exif_entry_get_value(entry, val, maxlen)
-    ccall((:exif_entry_get_value, libexifentry), Ptr{Cchar}, (Ptr{ExifEntry}, Ptr{Cchar}, Cuint), entry, val, maxlen)
-end
-
-function exif_content_new()
-    ccall((:exif_content_new, libexifcontent), Ptr{ExifContent}, ())
-end
-
-function exif_content_new_mem(arg1)
-    ccall((:exif_content_new_mem, libexifcontent), Ptr{ExifContent}, (Ptr{Cint},), arg1)
-end
-
-function exif_content_ref(content)
-    ccall((:exif_content_ref, libexifcontent), Cvoid, (Ptr{ExifContent},), content)
-end
-
-function exif_content_unref(content)
-    ccall((:exif_content_unref, libexifcontent), Cvoid, (Ptr{ExifContent},), content)
-end
-
-function exif_content_free(content)
-    ccall((:exif_content_free, libexifcontent), Cvoid, (Ptr{ExifContent},), content)
-end
-
-function exif_content_add_entry(c, entry)
-    ccall((:exif_content_add_entry, libexifcontent), Cvoid, (Ptr{ExifContent}, Ptr{Cint}), c, entry)
-end
-
-function exif_content_remove_entry(c, e)
-    ccall((:exif_content_remove_entry, libexifcontent), Cvoid, (Ptr{ExifContent}, Ptr{Cint}), c, e)
-end
-
-function exif_content_fix(c)
-    ccall((:exif_content_fix, libexifcontent), Cvoid, (Ptr{ExifContent},), c)
-end
-
-# typedef void ( * ExifContentForeachEntryFunc ) ( ExifEntry * , void * user_data )
-const ExifContentForeachEntryFunc = Ptr{Cvoid}
-
-function exif_content_foreach_entry(content, func, user_data)
-    ccall((:exif_content_foreach_entry, libexifcontent), Cvoid, (Ptr{ExifContent}, ExifContentForeachEntryFunc, Ptr{Cvoid}), content, func, user_data)
-end
-
-function exif_content_get_ifd(c)
-    ccall((:exif_content_get_ifd, libexifcontent), Cint, (Ptr{ExifContent},), c)
-end
-
-function exif_content_dump(content, indent)
-    ccall((:exif_content_dump, libexifcontent), Cvoid, (Ptr{ExifContent}, Cuint), content, indent)
-end
-
-function exif_content_log(content, log)
-    ccall((:exif_content_log, libexifcontent), Cvoid, (Ptr{ExifContent}, Ptr{Cint}), content, log)
-end
-
-@cenum ExifDataType::UInt32 begin
-    EXIF_DATA_TYPE_UNCOMPRESSED_CHUNKY = 0
-    EXIF_DATA_TYPE_UNCOMPRESSED_PLANAR = 1
-    EXIF_DATA_TYPE_UNCOMPRESSED_YCC = 2
-    EXIF_DATA_TYPE_COMPRESSED = 3
-    EXIF_DATA_TYPE_COUNT = 4
-    EXIF_DATA_TYPE_UNKNOWN = 4
-end
-
-
-
-function exif_data_new()
-    ccall((:exif_data_new, libexifdata), Ptr{ExifData}, ())
-end
-
-function exif_data_new_mem(arg1)
-    ccall((:exif_data_new_mem, libexifdata), Ptr{ExifData}, (Ptr{Cint},), arg1)
-end
-
-function exif_data_new_from_file(path)
-    ccall((:exif_data_new_from_file, libexifdata), Ptr{ExifData}, (Ptr{Cchar},), path)
-end
-
-function exif_data_new_from_data(data, size)
-    ccall((:exif_data_new_from_data, libexifdata), Ptr{ExifData}, (Ptr{Cuchar}, Cuint), data, size)
-end
-
-function exif_data_load_data(data, d, size)
-    ccall((:exif_data_load_data, libexifdata), Cvoid, (Ptr{ExifData}, Ptr{Cuchar}, Cuint), data, d, size)
-end
-
-function exif_data_save_data(data, d, ds)
-    ccall((:exif_data_save_data, libexifdata), Cvoid, (Ptr{ExifData}, Ptr{Ptr{Cuchar}}, Ptr{Cuint}), data, d, ds)
-end
-
-function exif_data_ref(data)
-    ccall((:exif_data_ref, libexifdata), Cvoid, (Ptr{ExifData},), data)
-end
-
-function exif_data_unref(data)
-    ccall((:exif_data_unref, libexifdata), Cvoid, (Ptr{ExifData},), data)
-end
-
-function exif_data_free(data)
-    ccall((:exif_data_free, libexifdata), Cvoid, (Ptr{ExifData},), data)
-end
-
-function exif_data_get_byte_order(data)
-    ccall((:exif_data_get_byte_order, libexifdata), Cint, (Ptr{ExifData},), data)
-end
-
-function exif_data_set_byte_order(data, order)
-    ccall((:exif_data_set_byte_order, libexifdata), Cvoid, (Ptr{ExifData}, Cint), data, order)
-end
-
-function exif_data_get_mnote_data(d)
-    ccall((:exif_data_get_mnote_data, libexifdata), Ptr{Cint}, (Ptr{ExifData},), d)
-end
-
-function exif_data_fix(d)
-    ccall((:exif_data_fix, libexifdata), Cvoid, (Ptr{ExifData},), d)
-end
-
-# typedef void ( * ExifDataForeachContentFunc ) ( ExifContent * , void * user_data )
-const ExifDataForeachContentFunc = Ptr{Cvoid}
-
-function exif_data_foreach_content(data, func, user_data)
-    ccall((:exif_data_foreach_content, libexifdata), Cvoid, (Ptr{ExifData}, ExifDataForeachContentFunc, Ptr{Cvoid}), data, func, user_data)
-end
-
-@cenum ExifDataOption::UInt32 begin
-    EXIF_DATA_OPTION_IGNORE_UNKNOWN_TAGS = 1
-    EXIF_DATA_OPTION_FOLLOW_SPECIFICATION = 2
-    EXIF_DATA_OPTION_DONT_CHANGE_MAKER_NOTE = 4
-end
-
-function exif_data_option_get_name(o)
-    ccall((:exif_data_option_get_name, libexifdata), Ptr{Cchar}, (ExifDataOption,), o)
-end
-
-function exif_data_option_get_description(o)
-    ccall((:exif_data_option_get_description, libexifdata), Ptr{Cchar}, (ExifDataOption,), o)
-end
-
-function exif_data_set_option(d, o)
-    ccall((:exif_data_set_option, libexifdata), Cvoid, (Ptr{ExifData}, ExifDataOption), d, o)
-end
-
-function exif_data_unset_option(d, o)
-    ccall((:exif_data_unset_option, libexifdata), Cvoid, (Ptr{ExifData}, ExifDataOption), d, o)
-end
-
-function exif_data_set_data_type(d, dt)
-    ccall((:exif_data_set_data_type, libexifdata), Cvoid, (Ptr{ExifData}, Cint), d, dt)
-end
-
-function exif_data_get_data_type(d)
-    ccall((:exif_data_get_data_type, libexifdata), Cint, (Ptr{ExifData},), d)
-end
-
-function exif_data_dump(data)
-    ccall((:exif_data_dump, libexifdata), Cvoid, (Ptr{ExifData},), data)
-end
-
-function exif_data_log(data, log)
-    ccall((:exif_data_log, libexifdata), Cvoid, (Ptr{ExifData}, Ptr{Cint}), data, log)
-end
-
-
-function exif_entry_new()
-    ccall((:exif_entry_new, libexifentry), Ptr{ExifEntry}, ())
-end
-
-function exif_entry_new_mem(arg1)
-    ccall((:exif_entry_new_mem, libexifentry), Ptr{ExifEntry}, (Ptr{Cint},), arg1)
-end
-
-function exif_entry_ref(entry)
-    ccall((:exif_entry_ref, libexifentry), Cvoid, (Ptr{ExifEntry},), entry)
-end
-
-function exif_entry_unref(entry)
-    ccall((:exif_entry_unref, libexifentry), Cvoid, (Ptr{ExifEntry},), entry)
-end
-
-function exif_entry_free(entry)
-    ccall((:exif_entry_free, libexifentry), Cvoid, (Ptr{ExifEntry},), entry)
-end
-
-function exif_entry_initialize(e, tag)
-    ccall((:exif_entry_initialize, libexifentry), Cvoid, (Ptr{ExifEntry}, Cint), e, tag)
-end
-
-function exif_entry_fix(entry)
-    ccall((:exif_entry_fix, libexifentry), Cvoid, (Ptr{ExifEntry},), entry)
-end
-
-function exif_entry_dump(entry, indent)
-    ccall((:exif_entry_dump, libexifentry), Cvoid, (Ptr{ExifEntry}, Cuint), entry, indent)
-end
-
-@cenum ExifFormat::UInt32 begin
-    EXIF_FORMAT_BYTE = 1
-    EXIF_FORMAT_ASCII = 2
-    EXIF_FORMAT_SHORT = 3
-    EXIF_FORMAT_LONG = 4
-    EXIF_FORMAT_RATIONAL = 5
-    EXIF_FORMAT_SBYTE = 6
-    EXIF_FORMAT_UNDEFINED = 7
-    EXIF_FORMAT_SSHORT = 8
-    EXIF_FORMAT_SLONG = 9
-    EXIF_FORMAT_SRATIONAL = 10
-    EXIF_FORMAT_FLOAT = 11
-    EXIF_FORMAT_DOUBLE = 12
-end
-
-function exif_format_get_name(format)
-    ccall((:exif_format_get_name, libexifformat), Ptr{Cchar}, (ExifFormat,), format)
-end
-
-function exif_format_get_size(format)
-    ccall((:exif_format_get_size, libexifformat), Cuchar, (ExifFormat,), format)
-end
-
-@cenum ExifIfd::UInt32 begin
-    EXIF_IFD_0 = 0
-    EXIF_IFD_1 = 1
-    EXIF_IFD_EXIF = 2
-    EXIF_IFD_GPS = 3
-    EXIF_IFD_INTEROPERABILITY = 4
-    EXIF_IFD_COUNT = 5
-end
-
-function exif_ifd_get_name(ifd)
-    ccall((:exif_ifd_get_name, libexififd), Ptr{Cchar}, (ExifIfd,), ifd)
-end
-
-mutable struct _ExifLoader end
-
-const ExifLoader = _ExifLoader
-
-function exif_loader_new()
-    ccall((:exif_loader_new, libexifloader), Ptr{ExifLoader}, ())
-end
-
-function exif_loader_new_mem(mem)
-    ccall((:exif_loader_new_mem, libexifloader), Ptr{ExifLoader}, (Ptr{Cint},), mem)
-end
-
-function exif_loader_ref(loader)
-    ccall((:exif_loader_ref, libexifloader), Cvoid, (Ptr{ExifLoader},), loader)
-end
-
-function exif_loader_unref(loader)
-    ccall((:exif_loader_unref, libexifloader), Cvoid, (Ptr{ExifLoader},), loader)
-end
-
-function exif_loader_write_file(loader, fname)
-    ccall((:exif_loader_write_file, libexifloader), Cvoid, (Ptr{ExifLoader}, Ptr{Cchar}), loader, fname)
-end
-
-function exif_loader_write(loader, buf, sz)
-    ccall((:exif_loader_write, libexifloader), Cuchar, (Ptr{ExifLoader}, Ptr{Cuchar}, Cuint), loader, buf, sz)
-end
-
-function exif_loader_reset(loader)
-    ccall((:exif_loader_reset, libexifloader), Cvoid, (Ptr{ExifLoader},), loader)
-end
-
-function exif_loader_get_data(loader)
-    ccall((:exif_loader_get_data, libexifloader), Ptr{Cint}, (Ptr{ExifLoader},), loader)
-end
-
-function exif_loader_get_buf(loader, buf, buf_size)
-    ccall((:exif_loader_get_buf, libexifloader), Cvoid, (Ptr{ExifLoader}, Ptr{Ptr{Cuchar}}, Ptr{Cuint}), loader, buf, buf_size)
-end
-
-function exif_loader_log(loader, log)
-    ccall((:exif_loader_log, libexifloader), Cvoid, (Ptr{ExifLoader}, Ptr{Cint}), loader, log)
-end
-
-mutable struct _ExifLog end
-
-const ExifLog = _ExifLog
-
-function exif_log_new()
-    ccall((:exif_log_new, libexiflog), Ptr{ExifLog}, ())
-end
-
-function exif_log_new_mem(arg1)
-    ccall((:exif_log_new_mem, libexiflog), Ptr{ExifLog}, (Ptr{Cint},), arg1)
-end
-
-function exif_log_ref(log)
-    ccall((:exif_log_ref, libexiflog), Cvoid, (Ptr{ExifLog},), log)
-end
-
-function exif_log_unref(log)
-    ccall((:exif_log_unref, libexiflog), Cvoid, (Ptr{ExifLog},), log)
-end
-
-function exif_log_free(log)
-    ccall((:exif_log_free, libexiflog), Cvoid, (Ptr{ExifLog},), log)
-end
-
-@cenum ExifLogCode::UInt32 begin
-    EXIF_LOG_CODE_NONE = 0
-    EXIF_LOG_CODE_DEBUG = 1
-    EXIF_LOG_CODE_NO_MEMORY = 2
-    EXIF_LOG_CODE_CORRUPT_DATA = 3
-end
-
-function exif_log_code_get_title(code)
-    ccall((:exif_log_code_get_title, libexiflog), Ptr{Cchar}, (ExifLogCode,), code)
-end
-
-function exif_log_code_get_message(code)
-    ccall((:exif_log_code_get_message, libexiflog), Ptr{Cchar}, (ExifLogCode,), code)
-end
-
-# typedef void ( * ExifLogFunc ) ( ExifLog * log , ExifLogCode , const char * domain , const char * format , va_list args , void * data )
-const ExifLogFunc = Ptr{Cvoid}
-
-function exif_log_set_func(log, func, data)
-    ccall((:exif_log_set_func, libexiflog), Cvoid, (Ptr{ExifLog}, ExifLogFunc, Ptr{Cvoid}), log, func, data)
-end
-
-# typedef void * ( * ExifMemAllocFunc ) ( ExifLong s )
-const ExifMemAllocFunc = Ptr{Cvoid}
-
-# typedef void * ( * ExifMemReallocFunc ) ( void * p , ExifLong s )
-const ExifMemReallocFunc = Ptr{Cvoid}
-
-# typedef void ( * ExifMemFreeFunc ) ( void * p )
-const ExifMemFreeFunc = Ptr{Cvoid}
-
-mutable struct _ExifMem end
-
-const ExifMem = _ExifMem
-
-function exif_mem_new(a, r, f)
-    ccall((:exif_mem_new, libexifmem), Ptr{ExifMem}, (ExifMemAllocFunc, ExifMemReallocFunc, ExifMemFreeFunc), a, r, f)
-end
-
-function exif_mem_ref(arg1)
-    ccall((:exif_mem_ref, libexifmem), Cvoid, (Ptr{ExifMem},), arg1)
-end
-
-function exif_mem_unref(arg1)
-    ccall((:exif_mem_unref, libexifmem), Cvoid, (Ptr{ExifMem},), arg1)
-end
-
-function exif_mem_alloc(m, s)
-    ccall((:exif_mem_alloc, libexifmem), Ptr{Cvoid}, (Ptr{ExifMem}, Cint), m, s)
-end
-
-function exif_mem_realloc(m, p, s)
-    ccall((:exif_mem_realloc, libexifmem), Ptr{Cvoid}, (Ptr{ExifMem}, Ptr{Cvoid}, Cint), m, p, s)
-end
-
-function exif_mem_free(m, p)
-    ccall((:exif_mem_free, libexifmem), Cvoid, (Ptr{ExifMem}, Ptr{Cvoid}), m, p)
-end
-
-function exif_mem_new_default()
-    ccall((:exif_mem_new_default, libexifmem), Ptr{ExifMem}, ())
-end
-
-mutable struct _ExifMnoteData end
-
-const ExifMnoteData = _ExifMnoteData
-
-function exif_mnote_data_ref(arg1)
-    ccall((:exif_mnote_data_ref, libexifmnotedata), Cvoid, (Ptr{ExifMnoteData},), arg1)
-end
-
-function exif_mnote_data_unref(arg1)
-    ccall((:exif_mnote_data_unref, libexifmnotedata), Cvoid, (Ptr{ExifMnoteData},), arg1)
-end
-
-function exif_mnote_data_load(d, buf, buf_siz)
-    ccall((:exif_mnote_data_load, libexifmnotedata), Cvoid, (Ptr{ExifMnoteData}, Ptr{Cuchar}, Cuint), d, buf, buf_siz)
-end
-
-function exif_mnote_data_save(d, buf, buf_siz)
-    ccall((:exif_mnote_data_save, libexifmnotedata), Cvoid, (Ptr{ExifMnoteData}, Ptr{Ptr{Cuchar}}, Ptr{Cuint}), d, buf, buf_siz)
-end
-
-function exif_mnote_data_count(d)
-    ccall((:exif_mnote_data_count, libexifmnotedata), Cuint, (Ptr{ExifMnoteData},), d)
-end
-
-function exif_mnote_data_get_id(d, n)
-    ccall((:exif_mnote_data_get_id, libexifmnotedata), Cuint, (Ptr{ExifMnoteData}, Cuint), d, n)
-end
-
-function exif_mnote_data_get_name(d, n)
-    ccall((:exif_mnote_data_get_name, libexifmnotedata), Ptr{Cchar}, (Ptr{ExifMnoteData}, Cuint), d, n)
-end
-
-function exif_mnote_data_get_title(d, n)
-    ccall((:exif_mnote_data_get_title, libexifmnotedata), Ptr{Cchar}, (Ptr{ExifMnoteData}, Cuint), d, n)
-end
-
-function exif_mnote_data_get_description(d, n)
-    ccall((:exif_mnote_data_get_description, libexifmnotedata), Ptr{Cchar}, (Ptr{ExifMnoteData}, Cuint), d, n)
-end
-
-function exif_mnote_data_get_value(d, n, val, maxlen)
-    ccall((:exif_mnote_data_get_value, libexifmnotedata), Ptr{Cchar}, (Ptr{ExifMnoteData}, Cuint, Ptr{Cchar}, Cuint), d, n, val, maxlen)
-end
-
-function exif_mnote_data_log(arg1, arg2)
-    ccall((:exif_mnote_data_log, libexifmnotedata), Cvoid, (Ptr{ExifMnoteData}, Ptr{Cint}), arg1, arg2)
-end
-
-@cenum ExifTag::UInt32 begin
+@enum ExifTag::UInt32 begin
     EXIF_TAG_INTEROPERABILITY_INDEX = 1
     EXIF_TAG_INTEROPERABILITY_VERSION = 2
     EXIF_TAG_NEW_SUBFILE_TYPE = 254
@@ -594,7 +151,487 @@ end
     EXIF_TAG_PADDING = 59932
 end
 
-@cenum ExifSupportLevel::UInt32 begin
+@enum ExifFormat::UInt32 begin
+    EXIF_FORMAT_BYTE = 1
+    EXIF_FORMAT_ASCII = 2
+    EXIF_FORMAT_SHORT = 3
+    EXIF_FORMAT_LONG = 4
+    EXIF_FORMAT_RATIONAL = 5
+    EXIF_FORMAT_SBYTE = 6
+    EXIF_FORMAT_UNDEFINED = 7
+    EXIF_FORMAT_SSHORT = 8
+    EXIF_FORMAT_SLONG = 9
+    EXIF_FORMAT_SRATIONAL = 10
+    EXIF_FORMAT_FLOAT = 11
+    EXIF_FORMAT_DOUBLE = 12
+end
+
+mutable struct _ExifEntryPrivate end
+
+const ExifEntryPrivate = _ExifEntryPrivate
+
+struct _ExifEntry
+    tag::ExifTag
+    format::ExifFormat
+    components::Culong
+    data::Ptr{Cuchar}
+    size::Cuint
+    parent::Ptr{ExifContent}
+    priv::Ptr{ExifEntryPrivate}
+end
+
+const ExifEntry = _ExifEntry
+
+function exif_content_get_entry(content, tag)
+    ccall((:exif_content_get_entry, libexif), Ptr{ExifEntry}, (Ptr{ExifContent}, ExifTag), content, tag)
+end
+
+function exif_entry_get_value(entry, val, maxlen)
+    ccall((:exif_entry_get_value, libexif), Ptr{Cchar}, (Ptr{ExifEntry}, Ptr{Cchar}, Cuint), entry, val, maxlen)
+end
+
+function exif_content_new()
+    ccall((:exif_content_new, libexif), Ptr{ExifContent}, ())
+end
+
+mutable struct _ExifMem end
+
+const ExifMem = _ExifMem
+
+function exif_content_new_mem(arg1)
+    ccall((:exif_content_new_mem, libexif), Ptr{ExifContent}, (Ptr{ExifMem},), arg1)
+end
+
+function exif_content_ref(content)
+    ccall((:exif_content_ref, libexif), Cvoid, (Ptr{ExifContent},), content)
+end
+
+function exif_content_unref(content)
+    ccall((:exif_content_unref, libexif), Cvoid, (Ptr{ExifContent},), content)
+end
+
+function exif_content_free(content)
+    ccall((:exif_content_free, libexif), Cvoid, (Ptr{ExifContent},), content)
+end
+
+function exif_content_add_entry(c, entry)
+    ccall((:exif_content_add_entry, libexif), Cvoid, (Ptr{ExifContent}, Ptr{ExifEntry}), c, entry)
+end
+
+function exif_content_remove_entry(c, e)
+    ccall((:exif_content_remove_entry, libexif), Cvoid, (Ptr{ExifContent}, Ptr{ExifEntry}), c, e)
+end
+
+function exif_content_fix(c)
+    ccall((:exif_content_fix, libexif), Cvoid, (Ptr{ExifContent},), c)
+end
+
+# typedef void ( * ExifContentForeachEntryFunc ) ( ExifEntry * , void * user_data )
+const ExifContentForeachEntryFunc = Ptr{Cvoid}
+
+function exif_content_foreach_entry(content, func, user_data)
+    ccall((:exif_content_foreach_entry, libexif), Cvoid, (Ptr{ExifContent}, ExifContentForeachEntryFunc, Ptr{Cvoid}), content, func, user_data)
+end
+
+@enum ExifIfd::UInt32 begin
+    EXIF_IFD_0 = 0
+    EXIF_IFD_1 = 1
+    EXIF_IFD_EXIF = 2
+    EXIF_IFD_GPS = 3
+    EXIF_IFD_INTEROPERABILITY = 4
+    EXIF_IFD_COUNT = 5
+end
+
+function exif_content_get_ifd(c)
+    ccall((:exif_content_get_ifd, libexif), ExifIfd, (Ptr{ExifContent},), c)
+end
+
+function exif_content_dump(content, indent)
+    ccall((:exif_content_dump, libexif), Cvoid, (Ptr{ExifContent}, Cuint), content, indent)
+end
+
+mutable struct _ExifLog end
+
+const ExifLog = _ExifLog
+
+function exif_content_log(content, log)
+    ccall((:exif_content_log, libexif), Cvoid, (Ptr{ExifContent}, Ptr{ExifLog}), content, log)
+end
+
+@enum ExifDataType::UInt32 begin
+    EXIF_DATA_TYPE_UNCOMPRESSED_CHUNKY = 0
+    EXIF_DATA_TYPE_UNCOMPRESSED_PLANAR = 1
+    EXIF_DATA_TYPE_UNCOMPRESSED_YCC = 2
+    EXIF_DATA_TYPE_COMPRESSED = 3
+    EXIF_DATA_TYPE_COUNT = 4
+    # EXIF_DATA_TYPE_UNKNOWN = 4
+end
+
+mutable struct _ExifDataPrivate end
+
+const ExifDataPrivate = _ExifDataPrivate
+
+struct _ExifData
+    ifd::NTuple{5, Ptr{ExifContent}}
+    data::Ptr{Cuchar}
+    size::Cuint
+    priv::Ptr{ExifDataPrivate}
+end
+
+const ExifData = _ExifData
+
+function exif_data_new()
+    ccall((:exif_data_new, libexif), Ptr{ExifData}, ())
+end
+
+function exif_data_new_mem(arg1)
+    ccall((:exif_data_new_mem, libexif), Ptr{ExifData}, (Ptr{ExifMem},), arg1)
+end
+
+function exif_data_new_from_file(path)
+    ccall((:exif_data_new_from_file, libexif), Ptr{ExifData}, (Ptr{Cchar},), path)
+end
+
+function exif_data_new_from_data(data, size)
+    ccall((:exif_data_new_from_data, libexif), Ptr{ExifData}, (Ptr{Cuchar}, Cuint), data, size)
+end
+
+function exif_data_load_data(data, d, size)
+    ccall((:exif_data_load_data, libexif), Cvoid, (Ptr{ExifData}, Ptr{Cuchar}, Cuint), data, d, size)
+end
+
+function exif_data_save_data(data, d, ds)
+    ccall((:exif_data_save_data, libexif), Cvoid, (Ptr{ExifData}, Ptr{Ptr{Cuchar}}, Ptr{Cuint}), data, d, ds)
+end
+
+function exif_data_ref(data)
+    ccall((:exif_data_ref, libexif), Cvoid, (Ptr{ExifData},), data)
+end
+
+function exif_data_unref(data)
+    ccall((:exif_data_unref, libexif), Cvoid, (Ptr{ExifData},), data)
+end
+
+function exif_data_free(data)
+    ccall((:exif_data_free, libexif), Cvoid, (Ptr{ExifData},), data)
+end
+
+function exif_data_get_byte_order(data)
+    ccall((:exif_data_get_byte_order, libexif), ExifByteOrder, (Ptr{ExifData},), data)
+end
+
+function exif_data_set_byte_order(data, order)
+    ccall((:exif_data_set_byte_order, libexif), Cvoid, (Ptr{ExifData}, ExifByteOrder), data, order)
+end
+
+mutable struct _ExifMnoteDataPriv end
+
+const ExifMnoteDataPriv = _ExifMnoteDataPriv
+
+struct _ExifMnoteDataMethods
+    free::Ptr{Cvoid}
+    save::Ptr{Cvoid}
+    load::Ptr{Cvoid}
+    set_offset::Ptr{Cvoid}
+    set_byte_order::Ptr{Cvoid}
+    count::Ptr{Cvoid}
+    get_id::Ptr{Cvoid}
+    get_name::Ptr{Cvoid}
+    get_title::Ptr{Cvoid}
+    get_description::Ptr{Cvoid}
+    get_value::Ptr{Cvoid}
+end
+
+const ExifMnoteDataMethods = _ExifMnoteDataMethods
+
+struct _ExifMnoteData
+    priv::Ptr{ExifMnoteDataPriv}
+    methods::ExifMnoteDataMethods
+    log::Ptr{ExifLog}
+    mem::Ptr{ExifMem}
+end
+
+const ExifMnoteData = _ExifMnoteData
+
+function exif_data_get_mnote_data(d)
+    ccall((:exif_data_get_mnote_data, libexif), Ptr{ExifMnoteData}, (Ptr{ExifData},), d)
+end
+
+function exif_data_fix(d)
+    ccall((:exif_data_fix, libexif), Cvoid, (Ptr{ExifData},), d)
+end
+
+# typedef void ( * ExifDataForeachContentFunc ) ( ExifContent * , void * user_data )
+const ExifDataForeachContentFunc = Ptr{Cvoid}
+
+function exif_data_foreach_content(data, func, user_data)
+    ccall((:exif_data_foreach_content, libexif), Cvoid, (Ptr{ExifData}, ExifDataForeachContentFunc, Ptr{Cvoid}), data, func, user_data)
+end
+
+@enum ExifDataOption::UInt32 begin
+    EXIF_DATA_OPTION_IGNORE_UNKNOWN_TAGS = 1
+    EXIF_DATA_OPTION_FOLLOW_SPECIFICATION = 2
+    EXIF_DATA_OPTION_DONT_CHANGE_MAKER_NOTE = 4
+end
+
+function exif_data_option_get_name(o)
+    ccall((:exif_data_option_get_name, libexif), Ptr{Cchar}, (ExifDataOption,), o)
+end
+
+function exif_data_option_get_description(o)
+    ccall((:exif_data_option_get_description, libexif), Ptr{Cchar}, (ExifDataOption,), o)
+end
+
+function exif_data_set_option(d, o)
+    ccall((:exif_data_set_option, libexif), Cvoid, (Ptr{ExifData}, ExifDataOption), d, o)
+end
+
+function exif_data_unset_option(d, o)
+    ccall((:exif_data_unset_option, libexif), Cvoid, (Ptr{ExifData}, ExifDataOption), d, o)
+end
+
+function exif_data_set_data_type(d, dt)
+    ccall((:exif_data_set_data_type, libexif), Cvoid, (Ptr{ExifData}, ExifDataType), d, dt)
+end
+
+function exif_data_get_data_type(d)
+    ccall((:exif_data_get_data_type, libexif), ExifDataType, (Ptr{ExifData},), d)
+end
+
+function exif_data_dump(data)
+    ccall((:exif_data_dump, libexif), Cvoid, (Ptr{ExifData},), data)
+end
+
+function exif_data_log(data, log)
+    ccall((:exif_data_log, libexif), Cvoid, (Ptr{ExifData}, Ptr{ExifLog}), data, log)
+end
+
+function exif_entry_new()
+    ccall((:exif_entry_new, libexif), Ptr{ExifEntry}, ())
+end
+
+function exif_entry_new_mem(arg1)
+    ccall((:exif_entry_new_mem, libexif), Ptr{ExifEntry}, (Ptr{ExifMem},), arg1)
+end
+
+function exif_entry_ref(entry)
+    ccall((:exif_entry_ref, libexif), Cvoid, (Ptr{ExifEntry},), entry)
+end
+
+function exif_entry_unref(entry)
+    ccall((:exif_entry_unref, libexif), Cvoid, (Ptr{ExifEntry},), entry)
+end
+
+function exif_entry_free(entry)
+    ccall((:exif_entry_free, libexif), Cvoid, (Ptr{ExifEntry},), entry)
+end
+
+function exif_entry_initialize(e, tag)
+    ccall((:exif_entry_initialize, libexif), Cvoid, (Ptr{ExifEntry}, ExifTag), e, tag)
+end
+
+function exif_entry_fix(entry)
+    ccall((:exif_entry_fix, libexif), Cvoid, (Ptr{ExifEntry},), entry)
+end
+
+function exif_entry_dump(entry, indent)
+    ccall((:exif_entry_dump, libexif), Cvoid, (Ptr{ExifEntry}, Cuint), entry, indent)
+end
+
+function exif_format_get_name(format)
+    ccall((:exif_format_get_name, libexif), Ptr{Cchar}, (ExifFormat,), format)
+end
+
+function exif_format_get_size(format)
+    ccall((:exif_format_get_size, libexif), Cuchar, (ExifFormat,), format)
+end
+
+function exif_ifd_get_name(ifd)
+    ccall((:exif_ifd_get_name, libexif), Ptr{Cchar}, (ExifIfd,), ifd)
+end
+
+mutable struct _ExifLoader end
+
+const ExifLoader = _ExifLoader
+
+function exif_loader_new()
+    ccall((:exif_loader_new, libexif), Ptr{ExifLoader}, ())
+end
+
+function exif_loader_new_mem(mem)
+    ccall((:exif_loader_new_mem, libexif), Ptr{ExifLoader}, (Ptr{ExifMem},), mem)
+end
+
+function exif_loader_ref(loader)
+    ccall((:exif_loader_ref, libexif), Cvoid, (Ptr{ExifLoader},), loader)
+end
+
+function exif_loader_unref(loader)
+    ccall((:exif_loader_unref, libexif), Cvoid, (Ptr{ExifLoader},), loader)
+end
+
+function exif_loader_write_file(loader, fname)
+    ccall((:exif_loader_write_file, libexif), Cvoid, (Ptr{ExifLoader}, Ptr{Cchar}), loader, fname)
+end
+
+function exif_loader_write(loader, buf, sz)
+    ccall((:exif_loader_write, libexif), Cuchar, (Ptr{ExifLoader}, Ptr{Cuchar}, Cuint), loader, buf, sz)
+end
+
+function exif_loader_reset(loader)
+    ccall((:exif_loader_reset, libexif), Cvoid, (Ptr{ExifLoader},), loader)
+end
+
+function exif_loader_get_data(loader)
+    ccall((:exif_loader_get_data, libexif), Ptr{ExifData}, (Ptr{ExifLoader},), loader)
+end
+
+function exif_loader_get_buf(loader, buf, buf_size)
+    ccall((:exif_loader_get_buf, libexif), Cvoid, (Ptr{ExifLoader}, Ptr{Ptr{Cuchar}}, Ptr{Cuint}), loader, buf, buf_size)
+end
+
+function exif_loader_log(loader, log)
+    ccall((:exif_loader_log, libexif), Cvoid, (Ptr{ExifLoader}, Ptr{ExifLog}), loader, log)
+end
+
+function exif_log_new()
+    ccall((:exif_log_new, libexif), Ptr{ExifLog}, ())
+end
+
+function exif_log_new_mem(arg1)
+    ccall((:exif_log_new_mem, libexif), Ptr{ExifLog}, (Ptr{ExifMem},), arg1)
+end
+
+function exif_log_ref(log)
+    ccall((:exif_log_ref, libexif), Cvoid, (Ptr{ExifLog},), log)
+end
+
+function exif_log_unref(log)
+    ccall((:exif_log_unref, libexif), Cvoid, (Ptr{ExifLog},), log)
+end
+
+function exif_log_free(log)
+    ccall((:exif_log_free, libexif), Cvoid, (Ptr{ExifLog},), log)
+end
+
+@enum ExifLogCode::UInt32 begin
+    EXIF_LOG_CODE_NONE = 0
+    EXIF_LOG_CODE_DEBUG = 1
+    EXIF_LOG_CODE_NO_MEMORY = 2
+    EXIF_LOG_CODE_CORRUPT_DATA = 3
+end
+
+function exif_log_code_get_title(code)
+    ccall((:exif_log_code_get_title, libexif), Ptr{Cchar}, (ExifLogCode,), code)
+end
+
+function exif_log_code_get_message(code)
+    ccall((:exif_log_code_get_message, libexif), Ptr{Cchar}, (ExifLogCode,), code)
+end
+
+# typedef void ( * ExifLogFunc ) ( ExifLog * log , ExifLogCode , const char * domain , const char * format , va_list args , void * data )
+const ExifLogFunc = Ptr{Cvoid}
+
+function exif_log_set_func(log, func, data)
+    ccall((:exif_log_set_func, libexif), Cvoid, (Ptr{ExifLog}, ExifLogFunc, Ptr{Cvoid}), log, func, data)
+end
+
+# typedef void * ( * ExifMemAllocFunc ) ( ExifLong s )
+const ExifMemAllocFunc = Ptr{Cvoid}
+
+# typedef void * ( * ExifMemReallocFunc ) ( void * p , ExifLong s )
+const ExifMemReallocFunc = Ptr{Cvoid}
+
+# typedef void ( * ExifMemFreeFunc ) ( void * p )
+const ExifMemFreeFunc = Ptr{Cvoid}
+
+function exif_mem_new(a, r, f)
+    ccall((:exif_mem_new, libexif), Ptr{ExifMem}, (ExifMemAllocFunc, ExifMemReallocFunc, ExifMemFreeFunc), a, r, f)
+end
+
+function exif_mem_ref(arg1)
+    ccall((:exif_mem_ref, libexif), Cvoid, (Ptr{ExifMem},), arg1)
+end
+
+function exif_mem_unref(arg1)
+    ccall((:exif_mem_unref, libexif), Cvoid, (Ptr{ExifMem},), arg1)
+end
+
+const ExifLong = UInt32
+
+function exif_mem_alloc(m, s)
+    ccall((:exif_mem_alloc, libexif), Ptr{Cvoid}, (Ptr{ExifMem}, ExifLong), m, s)
+end
+
+function exif_mem_realloc(m, p, s)
+    ccall((:exif_mem_realloc, libexif), Ptr{Cvoid}, (Ptr{ExifMem}, Ptr{Cvoid}, ExifLong), m, p, s)
+end
+
+function exif_mem_free(m, p)
+    ccall((:exif_mem_free, libexif), Cvoid, (Ptr{ExifMem}, Ptr{Cvoid}), m, p)
+end
+
+function exif_mem_new_default()
+    ccall((:exif_mem_new_default, libexif), Ptr{ExifMem}, ())
+end
+
+function exif_mnote_data_construct(arg1, mem)
+    ccall((:exif_mnote_data_construct, libexif), Cvoid, (Ptr{ExifMnoteData}, Ptr{ExifMem}), arg1, mem)
+end
+
+function exif_mnote_data_set_byte_order(arg1, arg2)
+    ccall((:exif_mnote_data_set_byte_order, libexif), Cvoid, (Ptr{ExifMnoteData}, ExifByteOrder), arg1, arg2)
+end
+
+function exif_mnote_data_set_offset(arg1, arg2)
+    ccall((:exif_mnote_data_set_offset, libexif), Cvoid, (Ptr{ExifMnoteData}, Cuint), arg1, arg2)
+end
+
+function exif_mnote_data_ref(arg1)
+    ccall((:exif_mnote_data_ref, libexif), Cvoid, (Ptr{ExifMnoteData},), arg1)
+end
+
+function exif_mnote_data_unref(arg1)
+    ccall((:exif_mnote_data_unref, libexif), Cvoid, (Ptr{ExifMnoteData},), arg1)
+end
+
+function exif_mnote_data_load(d, buf, buf_siz)
+    ccall((:exif_mnote_data_load, libexif), Cvoid, (Ptr{ExifMnoteData}, Ptr{Cuchar}, Cuint), d, buf, buf_siz)
+end
+
+function exif_mnote_data_save(d, buf, buf_siz)
+    ccall((:exif_mnote_data_save, libexif), Cvoid, (Ptr{ExifMnoteData}, Ptr{Ptr{Cuchar}}, Ptr{Cuint}), d, buf, buf_siz)
+end
+
+function exif_mnote_data_count(d)
+    ccall((:exif_mnote_data_count, libexif), Cuint, (Ptr{ExifMnoteData},), d)
+end
+
+function exif_mnote_data_get_id(d, n)
+    ccall((:exif_mnote_data_get_id, libexif), Cuint, (Ptr{ExifMnoteData}, Cuint), d, n)
+end
+
+function exif_mnote_data_get_name(d, n)
+    ccall((:exif_mnote_data_get_name, libexif), Ptr{Cchar}, (Ptr{ExifMnoteData}, Cuint), d, n)
+end
+
+function exif_mnote_data_get_title(d, n)
+    ccall((:exif_mnote_data_get_title, libexif), Ptr{Cchar}, (Ptr{ExifMnoteData}, Cuint), d, n)
+end
+
+function exif_mnote_data_get_description(d, n)
+    ccall((:exif_mnote_data_get_description, libexif), Ptr{Cchar}, (Ptr{ExifMnoteData}, Cuint), d, n)
+end
+
+function exif_mnote_data_get_value(d, n, val, maxlen)
+    ccall((:exif_mnote_data_get_value, libexif), Ptr{Cchar}, (Ptr{ExifMnoteData}, Cuint, Ptr{Cchar}, Cuint), d, n, val, maxlen)
+end
+
+function exif_mnote_data_log(arg1, arg2)
+    ccall((:exif_mnote_data_log, libexif), Cvoid, (Ptr{ExifMnoteData}, Ptr{ExifLog}), arg1, arg2)
+end
+
+@enum ExifSupportLevel::UInt32 begin
     EXIF_SUPPORT_LEVEL_UNKNOWN = 0
     EXIF_SUPPORT_LEVEL_NOT_RECORDED = 1
     EXIF_SUPPORT_LEVEL_MANDATORY = 2
@@ -602,47 +639,47 @@ end
 end
 
 function exif_tag_from_name(name)
-    ccall((:exif_tag_from_name, libexiftag), ExifTag, (Ptr{Cchar},), name)
+    ccall((:exif_tag_from_name, libexif), ExifTag, (Ptr{Cchar},), name)
 end
 
 function exif_tag_get_name_in_ifd(tag, ifd)
-    ccall((:exif_tag_get_name_in_ifd, libexiftag), Ptr{Cchar}, (ExifTag, Cint), tag, ifd)
+    ccall((:exif_tag_get_name_in_ifd, libexif), Ptr{Cchar}, (ExifTag, ExifIfd), tag, ifd)
 end
 
 function exif_tag_get_title_in_ifd(tag, ifd)
-    ccall((:exif_tag_get_title_in_ifd, libexiftag), Ptr{Cchar}, (ExifTag, Cint), tag, ifd)
+    ccall((:exif_tag_get_title_in_ifd, libexif), Ptr{Cchar}, (ExifTag, ExifIfd), tag, ifd)
 end
 
 function exif_tag_get_description_in_ifd(tag, ifd)
-    ccall((:exif_tag_get_description_in_ifd, libexiftag), Ptr{Cchar}, (ExifTag, Cint), tag, ifd)
+    ccall((:exif_tag_get_description_in_ifd, libexif), Ptr{Cchar}, (ExifTag, ExifIfd), tag, ifd)
 end
 
 function exif_tag_get_support_level_in_ifd(tag, ifd, t)
-    ccall((:exif_tag_get_support_level_in_ifd, libexiftag), ExifSupportLevel, (ExifTag, Cint, Cint), tag, ifd, t)
+    ccall((:exif_tag_get_support_level_in_ifd, libexif), ExifSupportLevel, (ExifTag, ExifIfd, ExifDataType), tag, ifd, t)
 end
 
 function exif_tag_get_name(tag)
-    ccall((:exif_tag_get_name, libexiftag), Ptr{Cchar}, (ExifTag,), tag)
+    ccall((:exif_tag_get_name, libexif), Ptr{Cchar}, (ExifTag,), tag)
 end
 
 function exif_tag_get_title(tag)
-    ccall((:exif_tag_get_title, libexiftag), Ptr{Cchar}, (ExifTag,), tag)
+    ccall((:exif_tag_get_title, libexif), Ptr{Cchar}, (ExifTag,), tag)
 end
 
 function exif_tag_get_description(tag)
-    ccall((:exif_tag_get_description, libexiftag), Ptr{Cchar}, (ExifTag,), tag)
+    ccall((:exif_tag_get_description, libexif), Ptr{Cchar}, (ExifTag,), tag)
 end
 
 function exif_tag_table_get_tag(n)
-    ccall((:exif_tag_table_get_tag, libexiftag), ExifTag, (Cuint,), n)
+    ccall((:exif_tag_table_get_tag, libexif), ExifTag, (Cuint,), n)
 end
 
 function exif_tag_table_get_name(n)
-    ccall((:exif_tag_table_get_name, libexiftag), Ptr{Cchar}, (Cuint,), n)
+    ccall((:exif_tag_table_get_name, libexif), Ptr{Cchar}, (Cuint,), n)
 end
 
 function exif_tag_table_count()
-    ccall((:exif_tag_table_count, libexiftag), Cuint, ())
+    ccall((:exif_tag_table_count, libexif), Cuint, ())
 end
 
 const ExifByte = Cuchar
@@ -654,8 +691,6 @@ const ExifAscii = Ptr{Cchar}
 const ExifShort = UInt16
 
 const ExifSShort = Int16
-
-const ExifLong = UInt32
 
 const ExifSLong = Int32
 
@@ -672,60 +707,59 @@ struct ExifSRational
 end
 
 function exif_get_short(b, order)
-    ccall((:exif_get_short, libexifutils), ExifShort, (Ptr{Cuchar}, Cint), b, order)
+    ccall((:exif_get_short, libexif), ExifShort, (Ptr{Cuchar}, ExifByteOrder), b, order)
 end
 
 function exif_get_sshort(b, order)
-    ccall((:exif_get_sshort, libexifutils), ExifSShort, (Ptr{Cuchar}, Cint), b, order)
+    ccall((:exif_get_sshort, libexif), ExifSShort, (Ptr{Cuchar}, ExifByteOrder), b, order)
 end
 
 function exif_get_long(b, order)
-    ccall((:exif_get_long, libexifutils), ExifLong, (Ptr{Cuchar}, Cint), b, order)
+    ccall((:exif_get_long, libexif), ExifLong, (Ptr{Cuchar}, ExifByteOrder), b, order)
 end
 
 function exif_get_slong(b, order)
-    ccall((:exif_get_slong, libexifutils), ExifSLong, (Ptr{Cuchar}, Cint), b, order)
+    ccall((:exif_get_slong, libexif), ExifSLong, (Ptr{Cuchar}, ExifByteOrder), b, order)
 end
 
 function exif_get_rational(b, order)
-    ccall((:exif_get_rational, libexifutils), ExifRational, (Ptr{Cuchar}, Cint), b, order)
+    ccall((:exif_get_rational, libexif), ExifRational, (Ptr{Cuchar}, ExifByteOrder), b, order)
 end
 
 function exif_get_srational(b, order)
-    ccall((:exif_get_srational, libexifutils), ExifSRational, (Ptr{Cuchar}, Cint), b, order)
+    ccall((:exif_get_srational, libexif), ExifSRational, (Ptr{Cuchar}, ExifByteOrder), b, order)
 end
 
 function exif_set_short(b, order, value)
-    ccall((:exif_set_short, libexifutils), Cvoid, (Ptr{Cuchar}, Cint, ExifShort), b, order, value)
+    ccall((:exif_set_short, libexif), Cvoid, (Ptr{Cuchar}, ExifByteOrder, ExifShort), b, order, value)
 end
 
 function exif_set_sshort(b, order, value)
-    ccall((:exif_set_sshort, libexifutils), Cvoid, (Ptr{Cuchar}, Cint, ExifSShort), b, order, value)
+    ccall((:exif_set_sshort, libexif), Cvoid, (Ptr{Cuchar}, ExifByteOrder, ExifSShort), b, order, value)
 end
 
 function exif_set_long(b, order, value)
-    ccall((:exif_set_long, libexifutils), Cvoid, (Ptr{Cuchar}, Cint, ExifLong), b, order, value)
+    ccall((:exif_set_long, libexif), Cvoid, (Ptr{Cuchar}, ExifByteOrder, ExifLong), b, order, value)
 end
 
 function exif_set_slong(b, order, value)
-    ccall((:exif_set_slong, libexifutils), Cvoid, (Ptr{Cuchar}, Cint, ExifSLong), b, order, value)
+    ccall((:exif_set_slong, libexif), Cvoid, (Ptr{Cuchar}, ExifByteOrder, ExifSLong), b, order, value)
 end
 
 function exif_set_rational(b, order, value)
-    ccall((:exif_set_rational, libexifutils), Cvoid, (Ptr{Cuchar}, Cint, ExifRational), b, order, value)
+    ccall((:exif_set_rational, libexif), Cvoid, (Ptr{Cuchar}, ExifByteOrder, ExifRational), b, order, value)
 end
 
 function exif_set_srational(b, order, value)
-    ccall((:exif_set_srational, libexifutils), Cvoid, (Ptr{Cuchar}, Cint, ExifSRational), b, order, value)
+    ccall((:exif_set_srational, libexif), Cvoid, (Ptr{Cuchar}, ExifByteOrder, ExifSRational), b, order, value)
 end
 
 function exif_convert_utf16_to_utf8(out, in, maxlen)
-    ccall((:exif_convert_utf16_to_utf8, libexifutils), Cvoid, (Ptr{Cchar}, Ptr{Cushort}, Cint), out, in, maxlen)
+    ccall((:exif_convert_utf16_to_utf8, libexif), Cvoid, (Ptr{Cchar}, Ptr{Cushort}, Cint), out, in, maxlen)
 end
 
-# no prototype is found for this function at exif-utils.h:176:6, please use with caution
-function exif_array_set_byte_order()
-    ccall((:exif_array_set_byte_order, libexifutils), Cvoid, ())
+function exif_array_set_byte_order(arg1, arg2, arg3, o_orig, o_new)
+    ccall((:exif_array_set_byte_order, libexif), Cvoid, (ExifFormat, Ptr{Cuchar}, Cuint, ExifByteOrder, ExifByteOrder), arg1, arg2, arg3, o_orig, o_new)
 end
 
 const EXIF_TAG_GPS_VERSION_ID = 0x0000
