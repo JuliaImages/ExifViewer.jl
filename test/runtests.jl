@@ -10,3 +10,4 @@ get_example(x, y) = Downloads.download(_wrap(x, y))
 
 include("libexif.jl")
 include("exifviewer.jl")
+include("write.jl")
