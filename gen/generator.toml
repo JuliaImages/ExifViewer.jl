@@ -4,3 +4,8 @@ library_name = "libexif"
 output_file_path = "../lib/LibExif.jl"
 module_name = "LibExif"
 use_julia_native_enum_type = true
+
+[codegen]
+field_access_method_list = [
+    "_ExifEntry",
+]

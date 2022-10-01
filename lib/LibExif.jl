@@ -170,7 +170,7 @@ mutable struct _ExifEntryPrivate end
 
 const ExifEntryPrivate = _ExifEntryPrivate
 
-struct _ExifEntry
+mutable struct _ExifEntry
     tag::ExifTag
     format::ExifFormat
     components::Culong
@@ -178,6 +178,21 @@ struct _ExifEntry
     size::Cuint
     parent::Ptr{ExifContent}
     priv::Ptr{ExifEntryPrivate}
+end
+
+function Base.getproperty(x::Ptr{_ExifEntry}, f::Symbol)
+    f === :tag && return Ptr{ExifTag}(x + 0)
+    f === :format && return Ptr{ExifFormat}(x + 4)
+    f === :components && return Ptr{Culong}(x + 8)
+    f === :data && return Ptr{Ptr{Cuchar}}(x + 16)
+    f === :size && return Ptr{Cuint}(x + 24)
+    f === :parent && return Ptr{Ptr{ExifContent}}(x + 32)
+    f === :priv && return Ptr{Ptr{ExifEntryPrivate}}(x + 40)
+    return getfield(x, f)
+end
+
+function Base.setproperty!(x::Ptr{_ExifEntry}, f::Symbol, v)
+    unsafe_store!(getproperty(x, f), v)
 end
 
 const ExifEntry = _ExifEntry
