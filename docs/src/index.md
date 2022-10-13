@@ -29,7 +29,7 @@ described below:
 List of all available tags to search is available here: https://libexif.github.io/internals/exif-tag_8h.html
 
 #### Examples
-```jldoctest
+```jl
 julia> using TestImages, ExifViewer
 julia> filepath = testimage("earth_apollo17.jpg", download_only=true)
 julia> io = open(filepath, "r")
@@ -51,7 +51,7 @@ Dict{Any, Any} with 2 entries:
     
 ```
 
-Method to write exif data to files is also provided using `write_tags` and it writes EXIF tags to a 
+Method to write exif data to files is also provided using `write_tags`  and it writes EXIF tags to a 
 filepath(currently support for jpeg and jpg available). 
 
 ### Keyword Arguments

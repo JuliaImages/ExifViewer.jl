@@ -1,14 +1,19 @@
+push!(LOAD_PATH,"../src/")
 using ExifViewer
 using Documenter
 
-format = Documenter.HTML(
-    prettyurls = get(ENV, "CI", nothing) == "true"
-)
+DocMeta.setdocmeta!(ExifViewer, :DocTestSetup, :(using ExifViewer); recursive=true)
 
 makedocs(;
     modules=[ExifViewer],
+    authors="Ashwani Rathee",
+    repo="github.com/ashwani-rathee/ExifViewer.jl/blob/{commit}{path}#{line}",
     sitename="ExifViewer.jl",
-    format=format,
+    format=Documenter.HTML(;
+        prettyurls=Base.get(ENV, "CI", "false") == "true",
+        canonical="https://ashwani-rathee.github.io/ExifViewer.jl",
+        assets=String[],
+    ),
     pages=[
         "Home" => "index.md",
     ],
@@ -16,5 +21,6 @@ makedocs(;
 
 deploydocs(;
     repo="github.com/ashwani-rathee/ExifViewer.jl",
-    devbranch="master",
-)
+    devbranch="main",
+    push_preview = true
+) 
