@@ -1,42 +1,28 @@
-name: Documentation
-
+name: docs
 on:
-  pull_request:
-  push:
-    branches:
-      - 'master'
-      - 'release-'
-    tags: '*'
-  release:
-    types: [published]
-
+  - push
+  - pull_request
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        julia-version: [1]
-        os: [ubuntu-latest]
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@latest
+      - uses: julia-actions/setup-julia@v1
         with:
-          version: ${{ matrix.julia-version }}
-      - name: Cache artifacts
-        uses: actions/cache@v1
-        env:
-          cache-name: cache-artifacts
-        with:
-          path: ~/.julia/artifacts
-          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-test-${{ env.cache-name }}-
-            ${{ runner.os }}-test-
-            ${{ runner.os }}-
-      - name: Install dependencies
-        run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
-      - name: Build and deploy
+          version: '1'
+      - run: |
+          julia --project=docs -e '
+            using Pkg
+            Pkg.develop(PackageSpec(path=pwd()))
+            Pkg.instantiate()'
+      - run: |
+          julia --project=docs -e '
+            using Documenter: DocMeta, doctest
+            using ExifViewer
+            DocMeta.setdocmeta!(ExifViewer, :DocTestSetup, :(using ExifViewer); recursive=true)
+            doctest(ExifViewer)'
+      - run: julia --project=docs docs/make.jl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
-        run: julia --project=docs/ docs/make.jl
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }} 
