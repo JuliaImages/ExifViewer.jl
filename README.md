@@ -45,7 +45,7 @@ described below:
 List of all available tags to search is available here: https://libexif.github.io/internals/exif-tag_8h.html
 
 #### Examples
-```jldoctest
+```jl
 julia> using TestImages, ExifViewer
 julia> filepath = testimage("earth_apollo17.jpg", download_only=true)
 julia> io = open(filepath, "r")
