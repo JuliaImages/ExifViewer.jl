@@ -51,7 +51,7 @@ Dict{Any, Any} with 2 entries:
     
 ```
 
-Method to write exif data to files is also provided using `write_tags` and it writes EXIF tags to a 
+Method to write exif data to files is also provided using `write_tags`  and it writes EXIF tags to a 
 filepath(currently support for jpeg and jpg available). 
 
 ### Keyword Arguments
