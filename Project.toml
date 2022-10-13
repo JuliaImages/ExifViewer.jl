@@ -11,3 +11,5 @@ libexif_jll = "cdeeb48b-bcdf-5b3f-98c4-7a29487f695f"
 [compat]
 julia = "1.7"
 libexif_jll = "0.6"
+ColorTypes = "0.11.4"
+JpegTurbo = "0.1.1"
