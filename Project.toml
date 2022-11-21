@@ -1,6 +1,5 @@
 name = "ExifViewer"
 uuid = "81511e1f-44aa-483a-b228-c9d3a109f0d4"
-authors = ["Ashwani Rathee <ab669522@gmail.com>"]
 version = "0.1.0"
 
 [deps]

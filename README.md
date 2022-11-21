@@ -21,7 +21,7 @@ Dev Version
 ```julia
 using Pkg
 # Enter ']' from the REPL to enter Pkg mode.
-pkg> add https://github.com/ashwani-rathee/ExifViewer.jl.git
+pkg> add https://github.com/JuliaImages/ExifViewer.jl.git
 ```
 
 ### Usage
