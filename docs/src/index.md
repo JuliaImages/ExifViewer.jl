@@ -4,7 +4,7 @@ CurrentModule = ExifViewer
 
 # ExifViewer
 
-This is the documentation for [ExifViewer](https://github.com/ashwani-rathee/ExifViewer.jl)
+This is the documentation for [ExifViewer](https://github.com/JuliaImages/ExifViewer.jl)
 
 ExifViewer.jl is a Julia wrapper of the C library libexif that provides EXIF support. 
 
