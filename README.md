@@ -6,7 +6,7 @@
 ExifViewer.jl is a Julia wrapper of the C library libexif that provides EXIF support. EXIF is short for Exchangeable Image File, a format that is a standard for storing interchange information in digital photography image files using JPEG compression. 
 </p>
 
-[![Docs-dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://ashwani-rathee.github.io/ExifViewer.jl) [![Slack](https://img.shields.io/badge/chat-slack-e01e5a)](https://join.slack.com/t/julialang/shared_invite/zt-1hxxb5ryp-Ts_egJ7FRN2muQ7nkTtCNQ) [![License: MIT](https://img.shields.io/badge/License-MIT-success.svg)](https://opensource.org/licenses/MIT) [![Downloads](https://shields.io/endpoint?url=https://pkgs.genieframework.com/api/v1/badge/ExifViewer)](https://pkgs.genieframework.com?packages=ExifViewer)
+[![Docs-dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliaimages.org/ExifViewer.jl/dev/) [![Slack](https://img.shields.io/badge/chat-slack-e01e5a)](https://join.slack.com/t/julialang/shared_invite/zt-1hxxb5ryp-Ts_egJ7FRN2muQ7nkTtCNQ) [![License: MIT](https://img.shields.io/badge/License-MIT-success.svg)](https://opensource.org/licenses/MIT) [![Downloads](https://shields.io/endpoint?url=https://pkgs.genieframework.com/api/v1/badge/ExifViewer)](https://pkgs.genieframework.com?packages=ExifViewer)
 ### Installation
 --- 
 If you have not yet installed Julia, please follow the [instructions](https://julialang.org/downloads/platform/) for your operating system. 
@@ -21,7 +21,7 @@ Dev Version
 ```julia
 using Pkg
 # Enter ']' from the REPL to enter Pkg mode.
-pkg> add https://github.com/ashwani-rathee/ExifViewer.jl.git
+pkg> add https://github.com/JuliaImages/ExifViewer.jl.git
 ```
 
 ### Usage
