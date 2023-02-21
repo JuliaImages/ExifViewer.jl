@@ -78,8 +78,9 @@ function read_tags(
                 continue
             end
             res = unsafe_wrap(Array, data.entries, data.count)
-            for i = 1:data.count
-                entry = unsafe_load(res[i])
+            for j = 1:data.count
+                entry = unsafe_load(res[j])
+                # if(i == 4 & entry.tag in [0,1,2,50341,37520]) exif_tag_gps_set(entry) end
                 condition = read_all ? read_all : entry.tag in tags
                 if condition
                     LibExif.exif_entry_get_value(Ref(entry), str, length(str))
