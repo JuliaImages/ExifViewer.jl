@@ -7,7 +7,7 @@ function numentriesinifd(data::LibExif._ExifContent)
     return Int(data.count)
 end
 
-normalize_exif_flag(flags::Union{AbstractVector, Tuple}) = map(normalize_exif_flag, flags)
+normalize_exif_flag(flags::Union{AbstractVector,Tuple}) = map(normalize_exif_flag, flags)
 normalize_exif_flag(flag::AbstractString) = normalize_exif_flag(Symbol(flag))
 normalize_exif_flag(flag::Symbol) = getfield(LibExif, flag)
 normalize_exif_flag(flag::LibExif.ExifTag) = flag
@@ -15,32 +15,7 @@ normalize_exif_flag(flag::Int) = LibExif.ExifTag(flag)
 
 
 function issupported(tag)
-    if tag in ["EXIF_TAG_MAKE" ,"EXIF_TAG_ARTIST" ,"EXIF_TAG_MODEL" ,"EXIF_TAG_ORIENTATION" ,"EXIF_TAG_X_RESOLUTION","EXIF_TAG_Y_RESOLUTION","EXIF_TAG_RESOLUTION_UNIT" ,"EXIF_TAG_FOCAL_PLANE_RESOLUTION_UNIT"
-       ,"EXIF_TAG_YCBCR_POSITIONING" 
-       ,"EXIF_TAG_COMPRESSION" 
-       ,"EXIF_TAG_FNUMBER" 
-       ,"EXIF_TAG_COMPRESSED_BITS_PER_PIXEL" 
-       ,"EXIF_TAG_METERING_MODE" 
-       ,"EXIF_TAG_FLASH" 
-       ,"EXIF_TAG_FLASH_PIX_VERSION" 
-       ,"EXIF_TAG_PIXEL_Y_DIMENSION" 
-       ,"EXIF_TAG_PIXEL_X_DIMENSION" 
-       ,"EXIF_TAG_IMAGE_WIDTH" 
-       ,"EXIF_TAG_IMAGE_LENGTH"
-       ,"EXIF_TAG_COLOR_SPACE" 
-       ,"EXIF_TAG_FOCAL_PLANE_X_RESOLUTION" 
-       ,"EXIF_TAG_FOCAL_PLANE_Y_RESOLUTION" 
-       ,"EXIF_TAG_SENSING_METHOD" 
-       ,"EXIF_TAG_SUBJECT_DISTANCE_RANGE" 
-       ,"EXIF_TAG_PLANAR_CONFIGURATION" 
-       ,"EXIF_TAG_PHOTOMETRIC_INTERPRETATION" 
-       ,"EXIF_TAG_CUSTOM_RENDERED" 
-       ,"EXIF_TAG_EXPOSURE_MODE" 
-       ,"EXIF_TAG_WHITE_BALANCE" 
-       ,"EXIF_TAG_SCENE_CAPTURE_TYPE" 
-       ,"EXIF_TAG_GAIN_CONTROL" 
-       ,"EXIF_TAG_SATURATION" 
-       ,"EXIF_TAG_SHARPNESS" ,"EXIF_TAG_CONTRAST" ]
+    if tag in ["EXIF_TAG_MAKE", "EXIF_TAG_ARTIST", "EXIF_TAG_MODEL", "EXIF_TAG_ORIENTATION", "EXIF_TAG_X_RESOLUTION", "EXIF_TAG_Y_RESOLUTION", "EXIF_TAG_RESOLUTION_UNIT", "EXIF_TAG_FOCAL_PLANE_RESOLUTION_UNIT", "EXIF_TAG_YCBCR_POSITIONING", "EXIF_TAG_COMPRESSION", "EXIF_TAG_FNUMBER", "EXIF_TAG_COMPRESSED_BITS_PER_PIXEL", "EXIF_TAG_METERING_MODE", "EXIF_TAG_FLASH", "EXIF_TAG_FLASH_PIX_VERSION", "EXIF_TAG_PIXEL_Y_DIMENSION", "EXIF_TAG_PIXEL_X_DIMENSION", "EXIF_TAG_IMAGE_WIDTH", "EXIF_TAG_IMAGE_LENGTH", "EXIF_TAG_COLOR_SPACE", "EXIF_TAG_FOCAL_PLANE_X_RESOLUTION", "EXIF_TAG_FOCAL_PLANE_Y_RESOLUTION", "EXIF_TAG_SENSING_METHOD", "EXIF_TAG_SUBJECT_DISTANCE_RANGE", "EXIF_TAG_PLANAR_CONFIGURATION", "EXIF_TAG_PHOTOMETRIC_INTERPRETATION", "EXIF_TAG_CUSTOM_RENDERED", "EXIF_TAG_EXPOSURE_MODE", "EXIF_TAG_WHITE_BALANCE", "EXIF_TAG_SCENE_CAPTURE_TYPE", "EXIF_TAG_GAIN_CONTROL", "EXIF_TAG_SATURATION", "EXIF_TAG_SHARPNESS", "EXIF_TAG_CONTRAST"]
         return true
     else
         return false
@@ -82,7 +57,7 @@ TagsDict = Dict(
         "Left-bottom" => 8,
         "" => 0,
     ),
-    LibExif.EXIF_TAG_METERING_MODE=>Dict{String,UInt64}(
+    LibExif.EXIF_TAG_METERING_MODE => Dict{String,UInt64}(
         "Average" => 1,
         "Avg" => 1,
         "Center-weighted average" => 2,
@@ -94,7 +69,7 @@ TagsDict = Dict(
         "Other" => 255,
         "" => 0,
     ),
-    LibExif.EXIF_TAG_SENSING_METHOD=>Dict{String,UInt64}(
+    LibExif.EXIF_TAG_SENSING_METHOD => Dict{String,UInt64}(
         "Not defined" => 1,
         "One-chip color area sensor" => 2,
         "Two-chip color area sensor" => 3,
@@ -104,7 +79,7 @@ TagsDict = Dict(
         "Color sequential linear sensor" => 7,
         "" => 0,
     ),
-    LibExif.EXIF_TAG_FLASH=>Dict{String,UInt64}(
+    LibExif.EXIF_TAG_FLASH => Dict{String,UInt64}(
         "Flash did not fire" => 0x0000,
         "No flash" => 0x0000,
         "Flash fired" => 0x0001,
@@ -140,73 +115,73 @@ TagsDict = Dict(
             0x005f,
         "" => 0,
     ),
-    LibExif.EXIF_TAG_YCBCR_POSITIONING=>Dict{String,UInt64}("Centered" => 1, "Co-sited" => 2, "" => 0),
-    LibExif.EXIF_TAG_RESOLUTION_UNIT=> Dict{String,UInt64}(
+    LibExif.EXIF_TAG_YCBCR_POSITIONING => Dict{String,UInt64}("Centered" => 1, "Co-sited" => 2, "" => 0),
+    LibExif.EXIF_TAG_RESOLUTION_UNIT => Dict{String,UInt64}(
         "Inch" => 2,
         "in" => 2,
         "Centimeter" => 3,
         "cm" => 3,
         "" => 0,
-        ),
-    LibExif.EXIF_TAG_FOCAL_PLANE_RESOLUTION_UNIT=> Dict{String,UInt64}(
+    ),
+    LibExif.EXIF_TAG_FOCAL_PLANE_RESOLUTION_UNIT => Dict{String,UInt64}(
         "Inch" => 2,
         "in" => 2,
         "Centimeter" => 3,
         "cm" => 3,
-        ),
-    LibExif.EXIF_TAG_PLANAR_CONFIGURATION=>Dict{String,UInt16}(
-        "Chunky format"=>0,
-        "Planar format"=>1,
     ),
-    LibExif.EXIF_TAG_PHOTOMETRIC_INTERPRETATION=>Dict{String, UInt16}(
-        "Reversed mono"=>0,
-        "Normal mono"=>1,
-        "RGB"=>2,
-        "Palette"=>3,
-        "CMYK"=>5,
-        "YCbCr"=>6,
-        "CieLAB"=>8,
+    LibExif.EXIF_TAG_PLANAR_CONFIGURATION => Dict{String,UInt16}(
+        "Chunky format" => 0,
+        "Planar format" => 1,
     ),
-    LibExif.EXIF_TAG_CUSTOM_RENDERED=>Dict{String,UInt16}(
-        "Normal process"=>0,
-        "Custom process"=>1,
+    LibExif.EXIF_TAG_PHOTOMETRIC_INTERPRETATION => Dict{String,UInt16}(
+        "Reversed mono" => 0,
+        "Normal mono" => 1,
+        "RGB" => 2,
+        "Palette" => 3,
+        "CMYK" => 5,
+        "YCbCr" => 6,
+        "CieLAB" => 8,
     ),
-    LibExif.EXIF_TAG_EXPOSURE_MODE =>Dict{String, UInt16}(
-        "Auto exposure"=>0,
-        "Manual exposure"=>1,
-        "Auto Bracket"=>2,
+    LibExif.EXIF_TAG_CUSTOM_RENDERED => Dict{String,UInt16}(
+        "Normal process" => 0,
+        "Custom process" => 1,
     ),
-    LibExif.EXIF_TAG_WHITE_BALANCE =>Dict{String, UInt16}(
-        "Auto white balance"=>0,
-        "Manual white balance"=>1,
-        ),
-    LibExif.EXIF_TAG_SCENE_CAPTURE_TYPE =>Dict{String, UInt16}(
-        "Standard"=>0,
-        "Landscape"=>1,
-        "Portrait"=>2,
-        "Night scene"=>3,
-        ),
-    LibExif.EXIF_TAG_GAIN_CONTROL =>Dict{String, UInt16}(
-        "Normal"=>0,
-        "Low gain up"=>1,
-        "High gain up"=>2,
-        "Low gain down"=>3,
-        "High gain down"=>4,
-        ),
-    LibExif.EXIF_TAG_SATURATION =>Dict{String, UInt16}(
-        "Normal"=>0,
-        "Low saturation"=>1,
-        "High saturation"=>2
-        ),
-    LibExif.EXIF_TAG_CONTRAST =>Dict{String, UInt16}(
-        "Normal"=>0,
-        "Soft"=>1,
-        "Hard"=>2
-        ),
-    LibExif.EXIF_TAG_SHARPNESS =>Dict{String, UInt16}(
-        "Normal"=>0,
-        "Soft"=>1,
-        "Hard"=>2
-        ),
+    LibExif.EXIF_TAG_EXPOSURE_MODE => Dict{String,UInt16}(
+        "Auto exposure" => 0,
+        "Manual exposure" => 1,
+        "Auto Bracket" => 2,
+    ),
+    LibExif.EXIF_TAG_WHITE_BALANCE => Dict{String,UInt16}(
+        "Auto white balance" => 0,
+        "Manual white balance" => 1,
+    ),
+    LibExif.EXIF_TAG_SCENE_CAPTURE_TYPE => Dict{String,UInt16}(
+        "Standard" => 0,
+        "Landscape" => 1,
+        "Portrait" => 2,
+        "Night scene" => 3,
+    ),
+    LibExif.EXIF_TAG_GAIN_CONTROL => Dict{String,UInt16}(
+        "Normal" => 0,
+        "Low gain up" => 1,
+        "High gain up" => 2,
+        "Low gain down" => 3,
+        "High gain down" => 4,
+    ),
+    LibExif.EXIF_TAG_SATURATION => Dict{String,UInt16}(
+        "Normal" => 0,
+        "Low saturation" => 1,
+        "High saturation" => 2
+    ),
+    LibExif.EXIF_TAG_CONTRAST => Dict{String,UInt16}(
+        "Normal" => 0,
+        "Soft" => 1,
+        "Hard" => 2
+    ),
+    LibExif.EXIF_TAG_SHARPNESS => Dict{String,UInt16}(
+        "Normal" => 0,
+        "Soft" => 1,
+        "Hard" => 2
+    ),
 )
 

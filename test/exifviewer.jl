@@ -80,10 +80,10 @@
     end
 
     @testset "Mnote Data" begin
-        @test length(read_tags(get_example("canon", 1); read_mnote=true)) == 106
+        @test length(read_tags(get_example("canon", 1); read_mnote=true)) == 115
         @test length(read_tags(get_example("fuji",1); read_mnote=true)) == 68
 
-        @test length(read_tags(get_example("olympus", 2); read_mnote=true)) == 64
+        @test length(read_tags(get_example("olympus", 2); read_mnote=true)) == 67
         @test length(read_tags(get_example("olympus", 3); read_mnote=true)) == 53
         @test length(read_tags(get_example("olympus", 4); read_mnote=true)) == 48
         @test length(read_tags(get_example("olympus", 5); read_mnote=true)) == 73
