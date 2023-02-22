@@ -80,13 +80,17 @@ function read_tags(
             res = unsafe_wrap(Array, data.entries, data.count)
             for j = 1:data.count
                 entry = unsafe_load(res[j])
-                # if(i == 4 & entry.tag in [0,1,2,50341,37520]) exif_tag_gps_set(entry) end
                 condition = read_all ? read_all : entry.tag in tags
                 if condition
                     LibExif.exif_entry_get_value(Ref(entry), str, length(str))
                     tag = String(copy(str))[1:max(findfirst(iszero, str) - 1, 1)]
                     if string(entry.tag) ∉ keys(result)
-                        result[string(entry.tag)] = tag
+                        tagname = string(entry.tag)
+                        # to update name if its gps ifd 
+                        if (i == 4 && UInt16(entry.tag) in keys(Base.Enums.namemap(LibExif.ExifTagGPS)))
+                            tagname = string(LibExif.ExifTagGPS(UInt16(entry.tag)))
+                        end
+                        result[tagname] = strip(tag)
                     end
                 end
                 if read_all == false
