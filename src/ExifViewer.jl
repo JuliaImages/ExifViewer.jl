@@ -10,6 +10,8 @@ include("utils.jl")
 include("read.jl")
 include("write.jl")
 
+include("precompile.jl")
+
 export read_tags, write_tags
 
 end
