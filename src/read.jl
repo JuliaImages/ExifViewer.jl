@@ -44,11 +44,11 @@ Dict{Any, Any} with 2 entries:
 function read_tags(
     data::Vector{UInt8};
     ifds::Union{Int,NTuple,UnitRange} = IFDS_ALL_FIELDS,
-    read_all = true,
+    read_all::Bool = true,
     tags::Union{AbstractVector,Tuple} = Vector{LibExif.ExifTag}([]),
-    extract_thumbnail = false,
-    read_mnote = false,
-)
+    extract_thumbnail::Bool = false,
+    read_mnote::Bool = false,
+)   
     ed_ptr = LibExif.exif_data_new_from_data(data, length(data))
     if (ed_ptr == C_NULL)
         return error("Unable to read EXIF data: invalid pointer")
@@ -57,7 +57,9 @@ function read_tags(
     tags = normalize_exif_flag(tags)
     typeassert(tags, Vector{LibExif.ExifTag})
 
-    result = Dict{String,Any}()
+    result = Dict{String,String}()
+    thumbnail_data = UInt8[]
+
     try
         ed = unsafe_load(ed_ptr)
         ifds = collect(ifds)
@@ -69,7 +71,7 @@ function read_tags(
         str = Vector{Cuchar}(undef, 1024)
 
         for i in ifds
-            content_ptr = ed.ifd[i] # ques: do we need to unref these too?
+            content_ptr = ed.ifd[i] 
             if (content_ptr == C_NULL)
                 return error("Unable to read IFD:", i)
             end
@@ -84,6 +86,7 @@ function read_tags(
                 if condition
                     LibExif.exif_entry_get_value(Ref(entry), str, length(str))
                     tag = String(copy(str))[1:max(findfirst(iszero, str) - 1, 1)]
+                    # @info entry.tag entry.format
                     if string(entry.tag) ∉ keys(result)
                         tagname = string(entry.tag)
                         # to update name if its gps ifd 
@@ -133,18 +136,19 @@ function read_tags(
         if (extract_thumbnail == true)
             thumbnail_size = Int(ed.size)
             thumbnail_data = unsafe_wrap(Array, ed.data, thumbnail_size)
-            result["EXIF_TAG_THUMBNAIL_DATA"] = thumbnail_data
         end
+
     finally
         LibExif.exif_data_unref(ed_ptr)
     end
 
-    return result
+    if(extract_thumbnail) return result, thumbnail_data
+    else return result end
 end
 
 function read_tags(filepath::AbstractString; kwargs...)
     open(filepath, "r") do io
-        read_tags(io; kwargs...)
+        read_tags(read(io); kwargs...)
     end
 end
 

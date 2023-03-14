@@ -417,7 +417,7 @@ function exif_mem_unref(arg1)
 end
 
 function exif_mem_alloc(m, s)
-    ccall((:exif_mem_alloc, libexif), Ptr{Cvoid}, (Ptr{ExifMem}, ExifLong), m, s)
+    ccall((:exif_mem_alloc, libexif), Ptr{UInt8}, (Ptr{ExifMem}, ExifLong), m, s)
 end
 
 function exif_mem_realloc(m, p, s)

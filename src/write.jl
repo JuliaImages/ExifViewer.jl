@@ -119,7 +119,7 @@ function create_exif_data(tags)
             ifd = 3
         end
 
-        if ifd === nothing || issupported(i) == false
+        if ifd === nothing
             @debug "Tag not supported currently or No Appropriate IFD found " key
             continue
         end

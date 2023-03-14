@@ -14,7 +14,7 @@ using SnoopPrecompile
 
     write(path, file)
 
-    tags = Dict{String,Any}(
+    tags = Dict{String, String}(
         "EXIF_TAG_MAKE" => "test",
         "EXIF_TAG_ORIENTATION" => "Top-left",
         "EXIF_TAG_X_RESOLUTION" => "300",
@@ -40,9 +40,9 @@ using SnoopPrecompile
             read_tags(io; read_all=true)
         end
 
-        for img in imgs_list
-            write_tags(path; img, tags)
-        end
+        # for img in imgs_list
+        #     write_tags(path; img, writetags)
+        # end
 
     end
 
