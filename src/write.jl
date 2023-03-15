@@ -31,9 +31,26 @@ function set_value(ptrentry, tagv)
         LibExif.exif_set_rational(entry.data,FILE_BYTE_ORDER, LibExif.ExifRational(p.num, p.den))
     elseif entry.format == LibExif.EXIF_FORMAT_ASCII
         len = sizeof(tagv)+1
-        unsafe_store!(ptrentry.size, UInt32(len), 1)
-        unsafe_store!(ptrentry.components, UInt32(len), 1)
-        unsafe_copyto!(entry.data, pointer(Vector{UInt8}(tagv * "\0")), length(tagv) + 1)
+        unsafe_store!(ptrentry.size, Cuint(len), 1)
+        unsafe_store!(ptrentry.components, Culong(len), 1)
+        mem = LibExif.exif_mem_new_default()
+        buf = LibExif.exif_mem_alloc(mem, len)
+        unsafe_copyto!(buf, pointer(Vector{UInt8}(tagv * "\0")), len)
+        ptrentry.data = buf
+    elseif entry.format == LibExif.EXIF_FORMAT_SRATIONAL
+        p = Rational(parse(Float32, tagv))
+        LibExif.exif_set_srational(entry.data, FILE_BYTE_ORDER, LibExif.ExifSRational(p.num, p.den))
+    elseif entry.format == LibExif.EXIF_FORMAT_UNDEFINED
+        if entry.tag == LibExif.EXIF_TAG_FLASH_PIX_VERSION
+            data = Dict{String,String}(
+            "FlashPix Version 1.0" => "0100\0",
+            "FlashPix Version 1.01" => "0101\0",
+            "Unknown FlashPix Version" => "0000\0",
+            )
+            unsafe_copyto!(entry.data, pointer(Vector{UInt8}(data[tagv])), 5)
+        else
+            @debug "Tag unsupported" entry.tag
+        end
     else
         @debug "Tag unsupported" entry.tag
     end
