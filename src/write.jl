@@ -15,71 +15,27 @@ function init_tag(exif, ifd, tag)
     return entry
 end
 
-function set_value(entry, tagv)
-    if entry.tag in [
-        LibExif.EXIF_TAG_COMPRESSION,
-        LibExif.EXIF_TAG_COLOR_SPACE,
-        LibExif.EXIF_TAG_SUBJECT_DISTANCE_RANGE,
-        LibExif.EXIF_TAG_ORIENTATION,
-        LibExif.EXIF_TAG_METERING_MODE,
-        LibExif.EXIF_TAG_SENSING_METHOD,
-        LibExif.EXIF_TAG_FLASH,
-        LibExif.EXIF_TAG_YCBCR_POSITIONING,
-        LibExif.EXIF_TAG_RESOLUTION_UNIT,
-        LibExif.EXIF_TAG_FOCAL_PLANE_RESOLUTION_UNIT,
-        LibExif.EXIF_TAG_PLANAR_CONFIGURATION,
-        LibExif.EXIF_TAG_PHOTOMETRIC_INTERPRETATION,
-        LibExif.EXIF_TAG_CUSTOM_RENDERED,
-        LibExif.EXIF_TAG_EXPOSURE_MODE,
-        LibExif.EXIF_TAG_WHITE_BALANCE,
-        LibExif.EXIF_TAG_SCENE_CAPTURE_TYPE,
-        LibExif.EXIF_TAG_GAIN_CONTROL,
-        LibExif.EXIF_TAG_SATURATION,
-        LibExif.EXIF_TAG_CONTRAST,
-        LibExif.EXIF_TAG_SHARPNESS
-    ]
-        LibExif.exif_set_short(
-            entry.data,
-            LibExif.EXIF_BYTE_ORDER_INTEL,
-            TagsDict[entry.tag][tagv],
-        )
-    elseif entry.tag == LibExif.EXIF_TAG_FLASH_PIX_VERSION
-        data = Dict{String,String}(
-            "FlashPix Version 1.0" => "0100\0",
-            "FlashPix Version 1.01" => "0101\0",
-            "Unknown FlashPix Version" => "0000\0",
-        )
-        unsafe_copyto!(entry.data, pointer(Vector{UInt8}(data[tagv])), 5)
-    elseif (entry.tag in [LibExif.EXIF_TAG_MAKE, LibExif.EXIF_TAG_ARTIST, LibExif.EXIF_TAG_MODEL])
-        unsafe_copyto!(entry.data, pointer(Vector{UInt8}(tagv * "\0")), length(tagv) + 1)
-    elseif entry.tag in [
-        LibExif.EXIF_TAG_PIXEL_Y_DIMENSION,
-        LibExif.EXIF_TAG_PIXEL_X_DIMENSION,
-        LibExif.EXIF_TAG_X_RESOLUTION,
-        LibExif.EXIF_TAG_Y_RESOLUTION,
-        LibExif.EXIF_TAG_IMAGE_WIDTH,
-        LibExif.EXIF_TAG_IMAGE_LENGTH,
-    ]
+function set_value(ptrentry, tagv)
+    entry = unsafe_load(ptrentry)
+    @info "Entry:" entry.tag entry.format entry.size entry.components 
+    if entry.format == LibExif.EXIF_FORMAT_SHORT
+        LibExif.exif_set_short(entry.data,LibExif.EXIF_BYTE_ORDER_INTEL, TagsDict[entry.tag][tagv])
+    elseif entry.format == LibExif.EXIF_FORMAT_LONG
         LibExif.exif_set_long(entry.data, FILE_BYTE_ORDER, parse(Cuint, tagv))
-    elseif entry.tag in [
-        LibExif.EXIF_TAG_EXPOSURE_TIME,
-        LibExif.EXIF_TAG_COMPRESSED_BITS_PER_PIXEL,
-        LibExif.EXIF_TAG_APERTURE_VALUE,
-        LibExif.EXIF_TAG_MAX_APERTURE_VALUE,
-        LibExif.EXIF_TAG_FOCAL_LENGTH,
-        LibExif.EXIF_TAG_FOCAL_PLANE_X_RESOLUTION,
-        LibExif.EXIF_TAG_FOCAL_PLANE_Y_RESOLUTION,
-    ]
-        p = rationalize(parse(Float32, tagv);tol=0.1)
+    elseif entry.format == LibExif.EXIF_FORMAT_RATIONAL
+        if entry.tag == LibExif.EXIF_TAG_FNUMBER
+            p = Rational(parse(Float32, split(tagv, "/")[2]))
+        else
+            p = rationalize(parse(Float32, tagv);tol=0.1)
+        end
         LibExif.exif_set_rational(entry.data,FILE_BYTE_ORDER, LibExif.ExifRational(p.num, p.den))
-    elseif entry.tag in [LibExif.EXIF_TAG_SHUTTER_SPEED_VALUE, LibExif.EXIF_TAG_EXPOSURE_BIAS_VALUE]
-        p = Rational(parse(Float32, tagv))
-        LibExif.exif_set_srational(entry.data, FILE_BYTE_ORDER, LibExif.ExifSRational(p.num, p.den))
-    elseif entry.tag == LibExif.EXIF_TAG_FNUMBER
-        p = Rational(parse(Float32, split(tagv, "/")[2]))
-        LibExif.exif_set_rational(entry.data, FILE_BYTE_ORDER, LibExif.ExifRational(p.num, p.den))
+    elseif entry.format == LibExif.EXIF_FORMAT_ASCII
+        len = sizeof(tagv)+1
+        unsafe_store!(ptrentry.size, UInt32(len), 1)
+        unsafe_store!(ptrentry.components, UInt32(len), 1)
+        unsafe_copyto!(entry.data, pointer(Vector{UInt8}(tagv * "\0")), length(tagv) + 1)
     else
-        println("Tag Not Supported")
+        @debug "Tag unsupported" entry.tag
     end
 end
 
@@ -89,9 +45,9 @@ function create_exif_data(tags)
     LibExif.exif_data_set_data_type(exif, LibExif.EXIF_DATA_TYPE_COMPRESSED)
     LibExif.exif_data_set_byte_order(exif, LibExif.EXIF_BYTE_ORDER_INTEL)
     LibExif.exif_data_fix(exif)
-    keys1 = keys(tags)
+    inputs = keys(tags)
 
-    for i in keys1
+    for i in inputs
         key = normalize_exif_flag(i)
         x = LibExif.EXIF_DATA_TYPE_UNCOMPRESSED_CHUNKY
 
@@ -118,14 +74,13 @@ function create_exif_data(tags)
         if key in [LibExif.EXIF_TAG_PIXEL_X_DIMENSION, LibExif.EXIF_TAG_PIXEL_Y_DIMENSION]
             ifd = 3
         end
-
+        
         if ifd === nothing
             @debug "Tag not supported currently or No Appropriate IFD found " key
             continue
         end
 
-        entry1 = init_tag(exif, ifd, key)
-        entry = unsafe_load(entry1)
+        entry = init_tag(exif, ifd, key)
         set_value(entry, tags[i])
     end
     return exif
@@ -171,7 +126,7 @@ Dict{String, Any} with 10 entries:
 
 Note: some tags are present by default like EXIF version, FLASHPIX version etc as can be seen in example above.
 """
-function write_tags(filepath::AbstractString; img::AbstractArray, tags::Dict{String,Any})
+function write_tags(filepath::AbstractString; img::AbstractArray, tags::Dict{String,String})
     # restricting filetype to .jpeg and .jpg
     if (!(split(filepath,".")[2] in ["jpeg", "jpg"]))
         throw(DomainError("Currently only jpeg and jpg files are supported for EXIF write operation."))

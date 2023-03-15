@@ -1,9 +1,9 @@
 @testset "write-exif.jl" begin
     img = testimage("mandrill")
 
-    tags = Dict{String, Any}(
+    tags = Dict{String, String}(
         "EXIF_TAG_MAKE"=>"Canon",
-        "EXIF_TAG_ARTIST"=>"Ashwani",
+        "EXIF_TAG_ARTIST"=>"Ashwani Rathee",
         "EXIF_TAG_MODEL"=>"R70",
         "EXIF_TAG_ORIENTATION"=>"Top-left",
         "EXIF_TAG_X_RESOLUTION"=>"300",
@@ -20,8 +20,6 @@
         "EXIF_TAG_COLOR_SPACE"=>"sRGB",
         "EXIF_TAG_PIXEL_Y_DIMENSION"=>"2",
         "EXIF_TAG_PIXEL_X_DIMENSION"=>"2",
-        "EXIF_TAG_IMAGE_WIDTH"=>"60",
-        "EXIF_TAG_IMAGE_LENGTH"=>"60",
         "EXIF_TAG_FOCAL_PLANE_X_RESOLUTION"=>"4.5",
         "EXIF_TAG_FOCAL_PLANE_Y_RESOLUTION"=>"4.5",
         "EXIF_TAG_SENSING_METHOD"=>"One-chip color area sensor",
@@ -38,9 +36,11 @@
         "EXIF_TAG_SHARPNESS"=>"Normal",
         "EXIF_TAG_COMPONENTS_CONFIGURATION"=> "Y Cb Cr -"
     )
-    write_tags("test.jpg"; img, tags=tags)
+    path = joinpath(tempdir(), "tmp.jpg")
+    write_tags(path; img, tags=tags)
     # currently only .jpg supported, different value of these were already checked
     # case where key in dict is not found needs to be handled,
     # support level issue needs to be handled
-    @test read_tags("test.jpg") == tags
+    @test read_tags(path) == tags
+    rm(path)
 end

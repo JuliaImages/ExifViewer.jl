@@ -40,9 +40,9 @@ using SnoopPrecompile
             read_tags(io; read_all=true)
         end
 
-        # for img in imgs_list
-        #     write_tags(path; img, writetags)
-        # end
+        for img in imgs_list
+            write_tags(path; img, tags)
+        end
 
     end
 
