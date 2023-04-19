@@ -1,26 +1,37 @@
+"""
+    numifds(ed::LibExif._ExifData)
 
+Returns the number of IFDs in the EXIF data.
+"""
 function numifds(ed::LibExif._ExifData)
     return length(ed.ifd)
 end
 
+
+"""
+    numentriesinifd(data::LibExif._ExifContent)
+
+Returns the number of entries in the IFD.
+"""
 function numentriesinifd(data::LibExif._ExifContent)
     return Int(data.count)
 end
 
+"""
 normalize_exif_flag(flags::Union{AbstractVector,Tuple}) = map(normalize_exif_flag, flags)
 normalize_exif_flag(flag::AbstractString) = normalize_exif_flag(Symbol(flag))
 normalize_exif_flag(flag::Symbol) = getfield(LibExif, flag)
 normalize_exif_flag(flag::LibExif.ExifTag) = flag
 normalize_exif_flag(flag::Int) = LibExif.ExifTag(flag)
 
+Converts the input to `LibExif.ExifTag` type if possible.
+"""
+normalize_exif_flag(flags::Union{AbstractVector,Tuple}) = map(normalize_exif_flag, flags)
+normalize_exif_flag(flag::AbstractString) = normalize_exif_flag(Symbol(flag))
+normalize_exif_flag(flag::Symbol) = getfield(LibExif, flag)
+normalize_exif_flag(flag::LibExif.ExifTag) = flag
+normalize_exif_flag(flag::Int) = LibExif.ExifTag(flag)
 
-function issupported(tag)
-    if tag in ["EXIF_TAG_MAKE", "EXIF_TAG_ARTIST", "EXIF_TAG_MODEL", "EXIF_TAG_ORIENTATION", "EXIF_TAG_X_RESOLUTION", "EXIF_TAG_Y_RESOLUTION", "EXIF_TAG_RESOLUTION_UNIT", "EXIF_TAG_FOCAL_PLANE_RESOLUTION_UNIT", "EXIF_TAG_YCBCR_POSITIONING", "EXIF_TAG_COMPRESSION", "EXIF_TAG_FNUMBER", "EXIF_TAG_COMPRESSED_BITS_PER_PIXEL", "EXIF_TAG_METERING_MODE", "EXIF_TAG_FLASH", "EXIF_TAG_FLASH_PIX_VERSION", "EXIF_TAG_PIXEL_Y_DIMENSION", "EXIF_TAG_PIXEL_X_DIMENSION", "EXIF_TAG_IMAGE_WIDTH", "EXIF_TAG_IMAGE_LENGTH", "EXIF_TAG_COLOR_SPACE", "EXIF_TAG_FOCAL_PLANE_X_RESOLUTION", "EXIF_TAG_FOCAL_PLANE_Y_RESOLUTION", "EXIF_TAG_SENSING_METHOD", "EXIF_TAG_SUBJECT_DISTANCE_RANGE", "EXIF_TAG_PLANAR_CONFIGURATION", "EXIF_TAG_PHOTOMETRIC_INTERPRETATION", "EXIF_TAG_CUSTOM_RENDERED", "EXIF_TAG_EXPOSURE_MODE", "EXIF_TAG_WHITE_BALANCE", "EXIF_TAG_SCENE_CAPTURE_TYPE", "EXIF_TAG_GAIN_CONTROL", "EXIF_TAG_SATURATION", "EXIF_TAG_SHARPNESS", "EXIF_TAG_CONTRAST"]
-        return true
-    else
-        return false
-    end
-end
 
 
 
@@ -183,5 +194,23 @@ TagsDict = Dict(
         "Soft" => 1,
         "Hard" => 2
     ),
+    LibExif.EXIF_TAG_EXPOSURE_PROGRAM => Dict{String,UInt16}(
+        "Not defined" => 0,
+        "Manual" => 1,
+        "Normal program" => 2,
+        "Normal" => 2,
+        "Aperture priority" => 3,
+        "Aperture" => 3,
+        "Shutter priority" => 4,
+        "Shutter" => 4,
+        "Creative program (biased toward depth of field)" => 5,
+        "Creative" => 5,
+        "Creative program (biased toward fast shutter speed)" => 6,
+        "Action" => 6,
+        "Portrait mode (for closeup photos with the background out of focus" => 7,
+        "Portrait" => 7,
+        "Landscape mode (for landscape photos with the background in focus)" => 8,
+        "Landscape" => 8,
+    )
 )
 

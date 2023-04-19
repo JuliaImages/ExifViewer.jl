@@ -29,7 +29,7 @@
             @test read_tags(io; tags = ["EXIF_TAG_EXIF_VERSION"])["EXIF_TAG_EXIF_VERSION"] == "Exif Version 2.1"
         end
 
-        @test typeof(read_tags([0x00, 0x01])) == Dict{String, Any} # to see behavior when garbage data in
+        @test typeof(read_tags([0x00, 0x01])) == Dict{String, String} # to see behavior when garbage data in
     end
 
     @testset "Different IFDs" begin
@@ -71,12 +71,12 @@
             return error("Unable to read EXIF data: invalid pointer")
         end
         ed = unsafe_load(ed_ptr)
-        @test length(
-            read_tags(filepath; tags = ["EXIF_TAG_ARTIST"], extract_thumbnail = true)["EXIF_TAG_THUMBNAIL_DATA"],
-        ) == ed.size
-        @test length(
-            read_tags(filepath; read_all=true, extract_thumbnail = true)["EXIF_TAG_THUMBNAIL_DATA"],
-        ) == ed.size
+        
+        tagsinfo , thumbnaildata = read_tags(filepath; tags = ["EXIF_TAG_ARTIST"], extract_thumbnail = true)
+        @test length(thumbnaildata) == ed.size
+
+        tagsinfo, thumbnaildata =  read_tags(filepath; read_all=true, extract_thumbnail = true)
+        @test length(thumbnaildata) == ed.size
     end
 
     @testset "Mnote Data" begin

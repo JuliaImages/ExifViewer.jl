@@ -14,7 +14,7 @@ using SnoopPrecompile
 
     write(path, file)
 
-    tags = Dict{String,Any}(
+    tags = Dict{String, String}(
         "EXIF_TAG_MAKE" => "test",
         "EXIF_TAG_ORIENTATION" => "Top-left",
         "EXIF_TAG_X_RESOLUTION" => "300",
