@@ -1,5 +1,10 @@
 const FILE_BYTE_ORDER = LibExif.EXIF_BYTE_ORDER_INTEL
 
+"""
+    init_tag(exif, ifd, tag)
+
+Initialize the entry of `tag` in `ifd` of `exif`.
+"""
 function init_tag(exif, ifd, tag)
     exif1 = unsafe_load(exif)
     entry = LibExif.exif_content_get_entry(exif1.ifd[ifd], tag)
@@ -13,6 +18,11 @@ function init_tag(exif, ifd, tag)
     return entry
 end
 
+"""
+    set_value(ptrentry, tagv)
+
+Set the value of the entry pointed by `ptrentry` to `tagv`.
+"""
 function set_value(ptrentry, tagv)
     entry = unsafe_load(ptrentry)
     if entry.format == LibExif.EXIF_FORMAT_SHORT
@@ -62,6 +72,11 @@ function set_value(ptrentry, tagv)
     end
 end
 
+"""
+    create_exif_data(tags::Dict{String, String})
+
+Create an exif data structure from a dictionary of tags.
+"""
 function create_exif_data(tags)
     exif = LibExif.exif_data_new()
     LibExif.exif_data_set_option(exif, LibExif.EXIF_DATA_OPTION_FOLLOW_SPECIFICATION)
