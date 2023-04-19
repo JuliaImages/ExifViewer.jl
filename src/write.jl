@@ -1,5 +1,3 @@
-
-
 const FILE_BYTE_ORDER = LibExif.EXIF_BYTE_ORDER_INTEL
 
 function init_tag(exif, ifd, tag)
@@ -17,13 +15,21 @@ end
 
 function set_value(ptrentry, tagv)
     entry = unsafe_load(ptrentry)
-    @info "Entry:" entry.tag entry.format entry.size entry.components 
     if entry.format == LibExif.EXIF_FORMAT_SHORT
-        LibExif.exif_set_short(entry.data,LibExif.EXIF_BYTE_ORDER_INTEL, TagsDict[entry.tag][tagv])
+        if entry.tag in keys(TagsDict)
+            LibExif.exif_set_short(entry.data,LibExif.EXIF_BYTE_ORDER_INTEL, TagsDict[entry.tag][tagv])
+        elseif (entry.tag == LibExif.EXIF_TAG_YCBCR_SUB_SAMPLING)
+            val = split(tagv, ",")
+            LibExif.exif_set_short(entry.data,LibExif.EXIF_BYTE_ORDER_INTEL, parse(Int, val[1]))
+            LibExif.exif_set_short(entry.data + 4,LibExif.EXIF_BYTE_ORDER_INTEL, parse(Int, val[2]))
+        else
+            @info entry.tag tagv
+            LibExif.exif_set_short(entry.data,LibExif.EXIF_BYTE_ORDER_INTEL, parse(Int, tagv))
+        end
     elseif entry.format == LibExif.EXIF_FORMAT_LONG
         LibExif.exif_set_long(entry.data, FILE_BYTE_ORDER, parse(Cuint, tagv))
     elseif entry.format == LibExif.EXIF_FORMAT_RATIONAL
-        if entry.tag == LibExif.EXIF_TAG_FNUMBER
+        if entry.tag in [LibExif.EXIF_TAG_FNUMBER, LibExif.EXIF_TAG_APERTURE_VALUE, LibExif.EXIF_TAG_MAX_APERTURE_VALUE]    
             p = Rational(parse(Float32, split(tagv, "/")[2]))
         else
             p = rationalize(parse(Float32, tagv);tol=0.1)

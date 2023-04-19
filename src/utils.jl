@@ -175,5 +175,23 @@ TagsDict = Dict(
         "Soft" => 1,
         "Hard" => 2
     ),
+    LibExif.EXIF_TAG_EXPOSURE_PROGRAM => Dict{String,UInt16}(
+        "Not defined" => 0,
+        "Manual" => 1,
+        "Normal program" => 2,
+        "Normal" => 2,
+        "Aperture priority" => 3,
+        "Aperture" => 3,
+        "Shutter priority" => 4,
+        "Shutter" => 4,
+        "Creative program (biased toward depth of field)" => 5,
+        "Creative" => 5,
+        "Creative program (biased toward fast shutter speed)" => 6,
+        "Action" => 6,
+        "Portrait mode (for closeup photos with the background out of focus" => 7,
+        "Portrait" => 7,
+        "Landscape mode (for landscape photos with the background in focus)" => 8,
+        "Landscape" => 8,
+    )
 )
 

@@ -3,7 +3,7 @@
 
     tags = Dict{String, String}(
         "EXIF_TAG_MAKE"=>"Canon",
-        "EXIF_TAG_ARTIST"=>"Ashwani Rathee",
+        "EXIF_TAG_ARTIST"=>"Ashwani",
         "EXIF_TAG_MODEL"=>"R70",
         "EXIF_TAG_ORIENTATION"=>"Top-left",
         "EXIF_TAG_X_RESOLUTION"=>"300",

@@ -142,7 +142,7 @@ function read_tags(
         LibExif.exif_data_unref(ed_ptr)
     end
 
-    if(extract_thumbnail) return result, thumbnail_data
+    if (extract_thumbnail) return result, thumbnail_data
     else return result end
 end
 
