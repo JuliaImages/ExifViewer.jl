@@ -166,7 +166,7 @@ Note: some tags are present by default like EXIF version, FLASHPIX version etc a
 """
 function write_tags(filepath::AbstractString; img::AbstractArray, tags::Dict{String,String})
     # restricting filetype to .jpeg and .jpg
-    if (!(split(filepath,".")[2] in ["jpeg", "jpg"]))
+    if (!(splitext(filepath)[2] in (".jpeg", ".jpg")))
         throw(DomainError("Currently only jpeg and jpg files are supported for EXIF write operation."))
     end
 
