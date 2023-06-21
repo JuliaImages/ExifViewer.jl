@@ -37,7 +37,7 @@
         "EXIF_TAG_COMPONENTS_CONFIGURATION"=> "Y Cb Cr -"
     )
     path = joinpath(tempdir(), "tmp.jpg")
-    write_tags(path; img, tags=tags)
+    write_tags(path; img, tags)
     # currently only .jpg supported, different value of these were already checked
     # case where key in dict is not found needs to be handled,
     # support level issue needs to be handled

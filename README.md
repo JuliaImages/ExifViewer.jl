@@ -50,18 +50,18 @@ julia> using TestImages, ExifViewer
 julia> filepath = testimage("earth_apollo17.jpg", download_only=true)
 julia> io = open(filepath, "r")
 julia> read_tags(io; read_all=false, tags=["EXIF_TAG_FLASH_PIX_VERSION", "EXIF_TAG_ORIENTATION"])
-Dict{Any, Any} with 2 entries:
+Dict{String, String} with 2 entries:
   "EXIF_TAG_FLASH_PIX_VERSION" => "FlashPix Version 1.0"
   "EXIF_TAG_ORIENTATION"       => "Top-left"
 
 julia> read_tags(filepath; read_all=false, tags=["EXIF_TAG_FLASH_PIX_VERSION", "EXIF_TAG_ORIENTATION"])
-Dict{Any, Any} with 2 entries:
+Dict{String, String} with 2 entries:
     "EXIF_TAG_FLASH_PIX_VERSION" => "FlashPix Version 1.0"
     "EXIF_TAG_ORIENTATION"       => "Top-left"
 
 julia> data = read(filepath)
 julia> read_tags(data, read_all=false, tags=["EXIF_TAG_FLASH_PIX_VERSION", "EXIF_TAG_ORIENTATION"])
-Dict{Any, Any} with 2 entries:
+Dict{String, String} with 2 entries:
       "EXIF_TAG_FLASH_PIX_VERSION" => "FlashPix Version 1.0"
       "EXIF_TAG_ORIENTATION"       => "Top-left"
     
@@ -73,7 +73,7 @@ filepath(currently support for jpeg and jpg available).
 #### Keyword Arguments
 - `filepath::AbstractString` : Name of the file to which image and exif is written.
 - `img::AbstractArray` : Image Array whose exif data is being written to the filepath mentioned above.
-- `tags::Dict{String,Any}` : EXIF tags and their corresponding values as defined in libexif library
+- `tags::Dict{String,String}` : EXIF tags and their corresponding values as defined in libexif library
 
 #### Examples
 
@@ -81,16 +81,16 @@ filepath(currently support for jpeg and jpg available).
 julia> using ExifViewer, TestImages
 julia> img = testimage("mandrill")
 
-julia> tags = Dict{String, Any}(
+julia> tags = Dict{String, String}(
     "EXIF_TAG_MAKE"=>"Canon",
     "EXIF_TAG_ORIENTATION"=>"Top-left",
     "EXIF_TAG_X_RESOLUTION"=>"300",
     "EXIF_TAG_Y_RESOLUTION"=>"300",
 )
-julia> write_tags("test.jpg"; img, tags=tags)
+julia> write_tags("test.jpg"; img, tags)
 
 julia> read_tags("test.jpg")
-Dict{String, Any} with 10 entries:
+Dict{String, String} with 10 entries:
   "EXIF_TAG_COLOR_SPACE"              => "Uncalibrated"
   "EXIF_TAG_COMPONENTS_CONFIGURATION" => "Y Cb Cr -"
   "EXIF_TAG_FLASH_PIX_VERSION"        => "FlashPix Version 1.0"
