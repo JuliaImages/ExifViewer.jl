@@ -34,7 +34,9 @@
         "EXIF_TAG_SATURATION"=>"Normal",
         "EXIF_TAG_CONTRAST"=>"Normal",
         "EXIF_TAG_SHARPNESS"=>"Normal",
-        "EXIF_TAG_COMPONENTS_CONFIGURATION"=> "Y Cb Cr -"
+        "EXIF_TAG_COMPONENTS_CONFIGURATION"=> "Y Cb Cr -",
+        "EXIF_TAG_USER_COMMENT"=>"Dummy comment",
+        # "EXIF_TAG_MAKER_NOTE"=>"Maker Note",  # TODO: support `EXIF_TAG_MAKER_NOTE`
     )
     path = joinpath(tempdir(), "tmp.jpg")
     write_tags(path; img, tags)
