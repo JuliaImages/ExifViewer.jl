@@ -18,6 +18,16 @@ function init_tag(exif, ifd, tag)
     return entry
 end
 
+function get_ascii_buffer(ptrentry, tagv)
+    len = sizeof(tagv) + 1
+    unsafe_store!(ptrentry.size, Cuint(len), 1)
+    unsafe_store!(ptrentry.components, Culong(len), 1)
+    mem = LibExif.exif_mem_new_default()
+    buf = LibExif.exif_mem_alloc(mem, len)
+    unsafe_copyto!(buf, pointer(Vector{UInt8}(tagv * "\0")), len)
+    return buf
+end
+
 """
     set_value(ptrentry, tagv)
 
@@ -28,7 +38,7 @@ function set_value(ptrentry, tagv)
     if entry.format == LibExif.EXIF_FORMAT_SHORT
         if entry.tag in keys(TagsDict)
             LibExif.exif_set_short(entry.data,LibExif.EXIF_BYTE_ORDER_INTEL, TagsDict[entry.tag][tagv])
-        elseif (entry.tag == LibExif.EXIF_TAG_YCBCR_SUB_SAMPLING)
+        elseif entry.tag == LibExif.EXIF_TAG_YCBCR_SUB_SAMPLING
             val = split(tagv, ",")
             LibExif.exif_set_short(entry.data,LibExif.EXIF_BYTE_ORDER_INTEL, parse(Int, val[1]))
             LibExif.exif_set_short(entry.data + 4,LibExif.EXIF_BYTE_ORDER_INTEL, parse(Int, val[2]))
@@ -39,33 +49,29 @@ function set_value(ptrentry, tagv)
     elseif entry.format == LibExif.EXIF_FORMAT_LONG
         LibExif.exif_set_long(entry.data, FILE_BYTE_ORDER, parse(Cuint, tagv))
     elseif entry.format == LibExif.EXIF_FORMAT_RATIONAL
-        if entry.tag in [LibExif.EXIF_TAG_FNUMBER, LibExif.EXIF_TAG_APERTURE_VALUE, LibExif.EXIF_TAG_MAX_APERTURE_VALUE]    
+        if entry.tag in (LibExif.EXIF_TAG_FNUMBER, LibExif.EXIF_TAG_APERTURE_VALUE, LibExif.EXIF_TAG_MAX_APERTURE_VALUE)    
             p = Rational(parse(Float32, split(tagv, "/")[2]))
         else
             p = rationalize(parse(Float32, tagv);tol=0.1)
         end
         LibExif.exif_set_rational(entry.data,FILE_BYTE_ORDER, LibExif.ExifRational(p.num, p.den))
     elseif entry.format == LibExif.EXIF_FORMAT_ASCII
-        len = sizeof(tagv)+1
-        unsafe_store!(ptrentry.size, Cuint(len), 1)
-        unsafe_store!(ptrentry.components, Culong(len), 1)
-        mem = LibExif.exif_mem_new_default()
-        buf = LibExif.exif_mem_alloc(mem, len)
-        unsafe_copyto!(buf, pointer(Vector{UInt8}(tagv * "\0")), len)
-        ptrentry.data = buf
+        ptrentry.data = get_ascii_buffer(ptrentry, tagv)
     elseif entry.format == LibExif.EXIF_FORMAT_SRATIONAL
         p = Rational(parse(Float32, tagv))
         LibExif.exif_set_srational(entry.data, FILE_BYTE_ORDER, LibExif.ExifSRational(p.num, p.den))
     elseif entry.format == LibExif.EXIF_FORMAT_UNDEFINED
         if entry.tag == LibExif.EXIF_TAG_FLASH_PIX_VERSION
             data = Dict{String,String}(
-            "FlashPix Version 1.0" => "0100\0",
-            "FlashPix Version 1.01" => "0101\0",
-            "Unknown FlashPix Version" => "0000\0",
+                "FlashPix Version 1.0" => "0100\0",
+                "FlashPix Version 1.01" => "0101\0",
+                "Unknown FlashPix Version" => "0000\0",
             )
             unsafe_copyto!(entry.data, pointer(Vector{UInt8}(data[tagv])), 5)
+        elseif entry.tag == LibExif.EXIF_TAG_USER_COMMENT
+            ptrentry.data = get_ascii_buffer(ptrentry, tagv)
         else
-            @debug "Tag unsupported" entry.tag
+            @debug "Tag unsupported (EXIF_FORMAT_UNDEFINED)" entry.tag
         end
     else
         @debug "Tag unsupported" entry.tag
@@ -109,7 +115,7 @@ function create_exif_data(tags)
         if key == LibExif.EXIF_TAG_YCBCR_POSITIONING
             ifd = 1
         end
-        if key in [LibExif.EXIF_TAG_PIXEL_X_DIMENSION, LibExif.EXIF_TAG_PIXEL_Y_DIMENSION]
+        if key in (LibExif.EXIF_TAG_PIXEL_X_DIMENSION, LibExif.EXIF_TAG_PIXEL_Y_DIMENSION)
             ifd = 3
         end
         
@@ -125,14 +131,14 @@ function create_exif_data(tags)
 end
 
 """
-write_tags(filepath::AbstractString; img::AbstractArray, tags::Dict{String,Any})
+write_tags(filepath::AbstractString; img::AbstractArray, tags::Dict{String,String})
 
 Write EXIF tags to a filepath(currently support for jpeg and jpg available). 
 
 ### Keyword Arguments
 - `filepath::AbstractString` : Name of the file to which image and exif is written.
 - `img::AbstractArray` : Image Array whose exif data is being written to the filepath mentioned above.
-- `tags::Dict{String,Any}` : EXIF tags and their corresponding values as defined in libexif library
+- `tags::Dict{String,String}` : EXIF tags and their corresponding values as defined in libexif library
 
 ### Examples
 
@@ -140,16 +146,16 @@ Write EXIF tags to a filepath(currently support for jpeg and jpg available).
 julia> using ExifViewer, TestImages
 julia> img = testimage("mandrill")
 
-julia> tags = Dict{String, Any}(
+julia> tags = Dict{String, String}(
     "EXIF_TAG_MAKE"=>"Canon",
     "EXIF_TAG_ORIENTATION"=>"Top-left",
     "EXIF_TAG_X_RESOLUTION"=>"300",
     "EXIF_TAG_Y_RESOLUTION"=>"300",
 )
-julia> write_tags("test.jpg"; img, tags=tags)
+julia> write_tags("test.jpg"; img, tags)
 
 julia> read_tags("test.jpg")
-Dict{String, Any} with 10 entries:
+Dict{String, String} with 10 entries:
   "EXIF_TAG_COLOR_SPACE"              => "Uncalibrated"
   "EXIF_TAG_COMPONENTS_CONFIGURATION" => "Y Cb Cr -"
   "EXIF_TAG_FLASH_PIX_VERSION"        => "FlashPix Version 1.0"
