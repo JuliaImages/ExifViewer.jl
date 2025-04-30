@@ -55,7 +55,7 @@ function read_tags(
     end
 
     tags = normalize_exif_flag(tags)
-    typeassert(tags, Vector{LibExif.ExifTag})
+    typeassert(tags, Vector{<:Union{LibExif.ExifTag, LibExif.ExifTagGPS}})
 
     result = Dict{String,String}()
     thumbnail_data = UInt8[]
